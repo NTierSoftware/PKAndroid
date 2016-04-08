@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">PeaceKeeperDev</string>
+
+    <!-- THERE MUST ONLY BE 1 (ONE) ACCOUNT OF TYPE accountType!
+see files
+	Contract.java
+	Connection.properties
+	res/values/strings.xml,
+	res/xml/authenticator.xml, and
+	res/xml/syncadapter.xml
+-->
+    <string name="AUTHORITY">org.peacekeeper.android.SQLite.Provider</string>
+    <string name="accountType">peacekeeper.authenticator.com</string>
+    <string name="AuthSvcDesc">Authorizes PeaceKeeper</string>
+
+<!--
+    <string name="crash_toast_text">PeaceKeeper is sending status now.</string>
+
+    <string name="action_finish">Exit</string>
+    <string name="action_email">NTierSoftwareEngineering@gmail.com</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_test">Test</string>
+
+    <string name="DbSqLiteName">PeaceKeeper database</string>
+-->
+
+    <string name="SyncSvcDesc">Syncs PeaceKeeper mobile data to the Webserver</string>
+    <string name="action_settings">Settings???correct this</string>
+    <string name="action_Exit">Exit</string>
+
+</resources>

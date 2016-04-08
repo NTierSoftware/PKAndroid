@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- See http://developer.android.com/training/sync-adapters/creating-sync-adapter.html#CreateSyncAdapterMetadata -->
+<!-- accountType must match the authenticator.xml accountType -->        
+<sync-adapter
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:contentAuthority="@string/AUTHORITY"
+        android:accountType="@string/accountType"
+        android:userVisible="true"
+        android:supportsUploading="true"
+        android:allowParallelSyncs="false"
+        android:isAlwaysSyncable="true"
+/>
