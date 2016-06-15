@@ -160,7 +160,7 @@ private String getDeviceAccountPW(){
 
 //PLACE ALL URL NAMES HERE
 /*
-	public static enum URLGet { Test, Status; }//enum GET
+	public static enum URLGet { Test, status; }//enum GET
 
 	public static enum URLPost{
 		registrations, //Certificate Signature Request

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="org.peacekeeper.app"
-          xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest package="org.peacekeeper.app" xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 <!--    http://developer.samsung.com/technical-doc/view.do?v=T000000103-->
@@ -8,6 +7,8 @@
     <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
     <uses-permission android:name="android.permission.INTERNET" />
+<!-- http://stackoverflow.com/questions/15718869/how-to-lock-android-apps-orientation-to-portrait-mode-->
+    <uses-feature android:name="android.hardware.screen.portrait" android:required="true" />
 
     <application
         android:name=".pkApplication"
@@ -19,10 +20,11 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar"
+            android:screenOrientation="portrait">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>

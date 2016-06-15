@@ -9,7 +9,14 @@ import com.onesignal.*;
 
 import org.json.*;
 import org.peacekeeper.crypto.*;
-import org.peacekeeper.rest.*;
+import org.peacekeeper.rest.Get;
+
+
+import org.peacekeeper.rest.Get.URLGet;
+import org.peacekeeper.rest.Post;
+
+
+import org.peacekeeper.rest.Post.URLPost;
 import org.peacekeeper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.*;
@@ -17,8 +24,6 @@ import org.slf4j.*;
 import ch.qos.logback.classic.*;
 import ch.qos.logback.classic.util.*;
 import ch.qos.logback.core.joran.spi.*;
-
-//import org.peacekeeper.crypto.Registrar;
 
 
 public class MainActivity extends AppCompatActivity{//implements AsyncResponse {
@@ -32,12 +37,6 @@ static private final ContextInitializer mContextInitializer = new ContextInitial
 
 private pkUtility mUtility;
 
-@Override public void onDestroy(){
-	super.onDestroy();
-	mLog.trace( "onDestroy():\t" );
-	mLoggerContext.stop();//flush log
-	mUtility.close();
-}
 
 @Override public boolean onCreateOptionsMenu( Menu menu ){
 	// Inflate the menu; this adds items to the action bar if it is present.
@@ -61,7 +60,6 @@ private pkUtility mUtility;
 */
 	case R.id.action_Exit:
 		finish();
-		//this.onDestroy();
 		break;
 	default:
 	}// switch
@@ -110,15 +108,11 @@ private pkUtility mUtility;
 	mLog.trace( "onStart():\t" );
 	super.onStart();
 	mUtility = pkUtility.getInstance( this );
-	mLog.debug( "serialno:\t" + pkUtility.getSystemProperty( "ro.serialno" ) );
-	mLog.debug( "android.os.Build.SERIAL:\t" + android.os.Build.SERIAL );
-	//Registrar registrar = new Registrar(this);
-	//registrar.execute();
-//	String url = "https://192.168.1.242:8181/GaelWebSvcGF4/rest/GAEL/Status";
-	String url = "http://192.168.1.242:8080/GaelWebSvcGF4/rest/GAEL/Status";
+/* mLog.debug( "serialno:\t" + pkUtility.getSystemProperty( "ro.serialno" ) );
+	mLog.debug( "android.os.Build.SERIAL:\t" + android.os.Build.SERIAL ); */
 
-//	org.peacekeeper.rest.Get myget = new org.peacekeeper.rest.Get(url);
-	Post myPost = new Post( Post.URLPost.registrations );
+	//new Get( URLGet.status ).submit();
+	new Post( URLPost.registrations );//.submit();
 }//onStart()
 
 @Override protected void onStop(){
@@ -128,6 +122,14 @@ private pkUtility mUtility;
 	mLoggerContext.stop();//flush log
 	super.onStop();
 }// onStop()
+
+@Override public void onDestroy(){
+	super.onDestroy();
+	mLog.trace( "onDestroy():\t" );
+	mLoggerContext.stop();//flush log
+	mUtility.close();
+}
+
 
 // This fires when a notification is opened by tapping on it or one is received while the app is runnning.
 private class pkNotificationOpenedHandler implements OneSignal.NotificationOpenedHandler{

@@ -1,6 +1,8 @@
 package org.peacekeeper.rest;// Created by John Donaldson, NTier Software Engineering on 4/3/2016.
 
 
+import android.widget.Toast;
+
 import com.android.volley.Request.*;
 import com.android.volley.Response.*;
 import com.android.volley.*;
@@ -15,50 +17,65 @@ import java.util.*;
 public class Get{
 protected static org.slf4j.Logger mLog;//	= org.slf4j.LoggerFactory.getLogger(Get.class);
 
-//protected  static Contract contract = new Contract();
 protected UUID msg_id = UUID.randomUUID();
 protected StringRequest stringRequest = null;
+protected pkUtility mUtility = pkUtility.getInstance();
+protected Enum  mURL;
+//protected Toast mToast, mToast2 ;// = Toast.makeText( this, "onCreate", Toast.LENGTH_SHORT );
+protected Toast mToast = Toast.makeText( mUtility.getBaseContext(), "", Toast.LENGTH_LONG );
+
+protected Response.Listener< String > mRespLsnr =  new Response.Listener< String >(){
+	@Override public void onResponse( String response ){
+		String respStr = "response:\t" + ((response == null)? "NULL" : response.toString() );
+		mToast.setText( respStr );
+		mToast.show();
+		mLog.debug( "url:\t" + mURL + "\t:Response:\t" + respStr );
+	}
+};
+
+
+protected ErrorListener mErrLsnr = new ErrorListener(){
+	@Override public void onErrorResponse( VolleyError error ){
+		mToast.setText( "Error:\t" + error.getMessage() );
+		mToast.show();
+		mLog.error( "Error!:\t" + error.getMessage() );
+
+		if( error.networkResponse != null){
+			NetworkResponse response = error.networkResponse;
+			int statusCode = error.networkResponse.statusCode;
+			mLog.error( "statuscode:\t" + statusCode + ":\t" + new String(response.data) );
+		}
+
+
+	}
+};
+
 
 //PLACE ALL URL NAMES HERE
 public static enum URLGet{
-	Test, Status;
+	Test, status, testGAEL;
 }//enum GET
 
 //http://developer.android.com/training/volley/requestqueue.html
-public Get(){ mLog = org.slf4j.LoggerFactory.getLogger( getClass() ); }//constructor
+public Get(){
+	mLog = org.slf4j.LoggerFactory.getLogger( getClass() );
+	//mLog.debug( "?? null arg Get() cstr/t getClass()/t" + getClass() );
+}//cstr
 
 
-public Get( URLGet url ){
-	super();
-	String urlStr = toURL( url ).toString();
+public < E extends Enum< E > > Get( E aURL ){
+	this();
+	mURL = aURL;
 
-	//http://developer.android.com/training/volley/requestqueue.html
-	stringRequest = new StringRequest( Method.GET, urlStr,
-	                                   new Listener< String >(){
-		                                   @Override
-		                                   public void onResponse( String response ){
-			                                   mLog.debug( "GET RESPONSE!!:\t" + response );
-		                                   }
-	                                   },
-	                                   new ErrorListener(){
-		                                   @Override
-		                                   public void onErrorResponse( VolleyError error ){
-			                                   mLog.debug( "error RESPONSE!!:\t" + error
-					                                   .getLocalizedMessage() );
-		                                   }
-	                                   } );
+	stringRequest = new StringRequest( Method.GET, toURL( mURL ).toString(), mRespLsnr, mErrLsnr );
+}//cstr
 
-	pkUtility.getInstance().getRequestQueue().add( stringRequest );
-}
+public void submit(){ mUtility.getRequestQueue().add( stringRequest ); }
 
-public void submit(){ pkUtility.getInstance().getRequestQueue().add( stringRequest ); }
-
+private static final String URLhead = "http://192.168.1.242:8888/";
 public < E extends Enum< E > > URL toURL( E URLPostOrGet ){
-//	try { return new URL(contract.HTTPS_URL + URLPostOrGet.name() + "/" ); }
-	try{
-		return new URL(
-				"https://192.168.1.242:8181/GaelWebSvcGF4/rest/GAEL/" + URLPostOrGet.name() + "/" );
-	}catch ( MalformedURLException e ){ e.printStackTrace(); }
+	try{ return new URL(URLhead + URLPostOrGet.name() + "/" ); }
+	catch ( MalformedURLException e ){ mLog.error( "Error!:\t" + e.getMessage() ); }
 	return null;
 }//contractURL
 }//class Get

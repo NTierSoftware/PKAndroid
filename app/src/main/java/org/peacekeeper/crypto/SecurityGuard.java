@@ -24,6 +24,7 @@ import org.peacekeeper.exception.*;
 import org.peacekeeper.util.*;
 import org.slf4j.*;
 import org.spongycastle.asn1.*;
+import org.spongycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.spongycastle.asn1.sec.*;
 import org.spongycastle.asn1.x500.*;
 import org.spongycastle.asn1.x500.style.*;
@@ -95,11 +96,17 @@ static public PKCS10CertificationRequest genCSR(){
 		GeneralNames subjectAltName = new GeneralNames(
 				new GeneralName(GeneralName.rfc822Name, emailAddr));
 
+//http://stackoverflow.com/questions/12863235/csr-generated-with-bouncycastle-missing-public-key-and-attributes
+//http://stackoverflow.com/questions/34169954/create-pkcs10-request-with-subject-alternatives-using-bouncy-castle-in-java
+		ExtensionsGenerator extnsnGenr = new ExtensionsGenerator();
+		extnsnGenr.addExtension(Extension.subjectAlternativeName, false, subjectAltName);
+
 		PKCS10CertificationRequestBuilder p10Builder = new JcaPKCS10CertificationRequestBuilder(
 				getX500Name()
 				, pair.getPublic() )
-				.addAttribute(Extension.subjectAlternativeName, new DEROctetString( subjectAltName)   )
-				.setLeaveOffEmptyAttributes(true)
+//				.addAttribute(Extension.subjectAlternativeName, new DEROctetString( subjectAltName)   )
+				.addAttribute(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest, extnsnGenr.generate());
+				//.setLeaveOffEmptyAttributes(false)
 				;
 
 		JcaContentSignerBuilder csBuilder = new JcaContentSignerBuilder( SHA256withECDSA );
@@ -108,7 +115,8 @@ static public PKCS10CertificationRequest genCSR(){
 		PKCS10CertificationRequest CSR = p10Builder.build( signer );
 	return CSR;
 
-	}catch ( OperatorCreationException| IOException X ){
+	}catch ( IOException| OperatorCreationException X ){
+	//}catch ( OperatorCreationException X ){
 		pkException CRYPTOERR = new pkException( pkErrCode.CRYPTO ).set( "registrations err", X );
 		mLog.error( CRYPTOERR.toString() );
 		throw CRYPTOERR;
@@ -161,9 +169,7 @@ static public void listAlgorithms( String algFilter ){
 
 
 		java.util.Collections.sort( algs );
-		for ( String alg : algs ){
-			mLog.debug( "\t" + alg );
-		}
+		for ( String alg : algs ) mLog.debug( "\t" + alg );
 		mLog.debug( "" );
 	}
 }//listAlgorithms
@@ -286,13 +292,16 @@ static private X500Name getX500Name(){
 	"deviceId"		: <uuid>,		# "e53ed886-0853-419a-96e3-8ec33d644853"
 	"name"			: <string>,		# "Vince"
 */
+
 	final String testPostalCode = "94602-4105";
 	return new X500NameBuilder( BCStrictStyle.INSTANCE )
 			.addRDN( BCStyle.CN, Alias )
 			//.addRDN( BCStrictStyle.EmailAddress, emailAddr )
 			.addRDN( BCStrictStyle.POSTAL_CODE, testPostalCode )
 			.addRDN( BCStrictStyle.SERIALNUMBER, deviceID )
-			.addRDN( BCStrictStyle.C, deviceID )
+//			.addRDN( BCStrictStyle.C, deviceID )
+			.addRDN( BCStrictStyle.C, "US" )
+
 			.build();
 }//getX500Name
 

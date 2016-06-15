@@ -86,35 +86,11 @@ public static boolean isAndroidOnline(){
 	return isConnected;
 }// isAndroidOnline()
 
-/*
-public void setMobileDataEnabled( final boolean enabled ){
-//http://stackoverflow.com/questions/9871762/android-turning-on-wifi-programmatically
-
-	final WifiManager wManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
-	wManager.setWifiEnabled(enabled); 	
-
-	try{	
-		//http://stackoverflow.com/questions/11555366/enable-disable-data-connection-in-android-programmatically
-	   final ConnectivityManager connMgr = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-	   final Class<?> conmanClass = Class.forName(connMgr.getClass().getName());
-	   final Field connectivityManagerField = conmanClass.getDeclaredField("mService");
-	   connectivityManagerField.setAccessible(true);
-	   final Object connectivityManager = connectivityManagerField.get(connMgr);
-	   final Class<?> connectivityManagerClass =  Class.forName(connectivityManager.getClass().getName());
-	   final Method setMobileDataEnabledMethod = connectivityManagerClass.getDeclaredMethod("setMobileDataEnabled", Boolean.TYPE);
-	   setMobileDataEnabledMethod.setAccessible(true);
-	
-	   setMobileDataEnabledMethod.invoke(connectivityManager, Boolean.valueOf(enabled));
-	}
-	catch( Exception e ){ mLog.error( "ERROR", e ); }
-}//setMobileDataEnabled
-*/
-
 
 public String deviceInfo(){
 	// http://stackoverflow.com/questions/8284706/send-email-via-gmail
 	String packageName = getPackageName(),
-			 versionName = "version Name|Number unknown!", 
+			 versionName = "version Name|Number unknown!",
 			 versionCode = versionName;
 
 	try{
@@ -185,7 +161,7 @@ public String deviceInfo(){
 												append(Environment.getDownloadCacheDirectory()).
 												append(Environment.getExternalStorageDirectory()).
 												append(Environment.getRootDirectory()).
-												
+
 												append( "\n************************\n" ).
 												append( "\n\n\nYou may also enter your (optional) message here:\n" ).
 	toString();
@@ -211,7 +187,7 @@ public static String AboutDevice(){
 
 	Map envs = System.getenv();
 /*	Set keys = envs.keySet();
-	Iterator i = keys.iterator();  */	
+	Iterator i = keys.iterator();  */
 	Iterator i = envs.keySet().iterator();
 	while ( i.hasNext() ){
 		String nextKey = (String)i.next();
@@ -242,31 +218,10 @@ public static String AboutDevice(){
 }
 
 
-/*
-public void sendEmail(){
-	// http://stackoverflow.com/questions/8284706/send-email-via-gmail
-	final String emailSubject = new StringBuilder().append( Messages.getString( "ApplicationName" )).
-																	toString(),
-				 emailBody = AboutDevice();
-
-
-	final Intent emailIntent = new Intent( Intent.ACTION_SENDTO,
-										   Uri.fromParts( "mailto",
-											Messages.getString( "emailAddr" ),
-											null ) );
-
-	emailIntent.putExtra( Intent.EXTRA_BCC, "GAELdb.help@gmail.com" )
-					.putExtra( Intent.EXTRA_SUBJECT, emailSubject )
-					.putExtra( Intent.EXTRA_TEXT, emailBody );
-
-	startActivity( Intent.createChooser( emailIntent, "Send email:" ) );
-}// sendEmail()
-*/
-
 
 public Properties getPropertiesFromAssets(String AssetFilename){
-	Properties properties = null; 
-	try {		
+	Properties properties = null;
+	try {
 		InputStream inputStream = mAssetManager.open(AssetFilename);
 		properties = new Properties();
 		properties.load(inputStream);
@@ -277,7 +232,7 @@ public Properties getPropertiesFromAssets(String AssetFilename){
 									.set("AssetFilename", AssetFilename);
 		throw ASSETFILE_NOT_FOUND;
 	}
-	
+
 	return properties;
 }//getPropertiesFromAssets
 
@@ -291,65 +246,18 @@ public String getServerIPaddr(){
 public Resources getResources(){ return mContext.getResources();}
 
 
-/*
-public boolean registerDevice(boolean FORCE){
-	final String Registration = "Registration",
-				 notYetRegistered = "";
-
-	String registered;
-	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-	try {
-//		registered = mSharedPreferences.getString(Registration, notYetRegistered);
-		registered = prefs.getString(Registration, notYetRegistered);
-		
-	} catch (Exception e) { registered = notYetRegistered; }
-	
-	//retVal indicates "Has the Device already been registered?"
-	boolean retVal = registered.equals(notYetRegistered);
-	if ( retVal || FORCE) {
-		//GaelException DEVICE_REGISTRATION = new GaelException(GaelErrCode.DEVICE_REGISTRATION);
-		//send device info via a silent exception report to the Server!
-	    ACRA.getErrorReporter().handleSilentException(null);
-	    
-	    String registrationDateTime = 
-	    		new SimpleDateFormat("yyMMddHHmmss", Locale.US)
-	    			.format( Calendar.getInstance().getTime() );
-
-	    
-	    prefs.edit()
-			.putString(Registration, registrationDateTime)
-			.apply();	  
-	    
-	}//if
-	return retVal; 
-}//registerDevice
-*/
 
 public static enum TestResult{ OK, DBdown, Webdown, Netdown, GPSdown, MismatchedDeployment; }
 public TestResult Test(){ return TestResult.Netdown; }
 
 
-@Override public String toString(){ 
+@Override public String toString(){
 	return new StringBuilder()
 				.append( deviceInfo() )
-				.toString(); 
+				.toString();
 }//toString()
 
 
-/*
-//http://developer.samsung.com/technical-doc/view.do?v=T000000103
-public String getDeviceId(){
-//getDeviceId() function Returns the unique device ID. for example,the IMEI for GSM and the MEID or ESN for CDMA phones.
-	TelephonyManager telephonyManager = (TelephonyManager) getSystemService(mContext.TELEPHONY_SERVICE);
-return telephonyManager.getDeviceId();
-}//getDeviceId
-
-public String getSubscriberId(){
-// getDeviceId() function Returns the unique device ID. for example,the IMEI for GSM and the MEID or ESN for CDMA phones.
-	TelephonyManager telephonyManager = (TelephonyManager) getSystemService(mContext.TELEPHONY_SERVICE);
-return telephonyManager.getSubscriberId();
-}//getSubscriberId
-*/
 
 private String getANDROID_ID(){
 // Settings.Secure.ANDROID_ID returns the unique DeviceID Works for Android 2.2 and above
@@ -372,6 +280,20 @@ public JSONObject getUniqDeviceID(){
 return uniqDeviceID;
 }//getUniqDeviceID
 
+
+public JSONObject getVersion(){
+//	String manufacturer = Build.MANUFACTURER, model = Build.MODEL;
+	JSONObject version = new JSONObject();
+	try {
+		version.put("SDK ver", Build.VERSION.SDK_INT )
+               .put("Release ver", Build.VERSION.RELEASE )
+		;
+	} catch (JSONException e) {
+		e.printStackTrace();
+		version = null;
+	}
+return version;
+}//getVersion
 
 public static String getSystemProperty(String sysProperty){
 // System Property "ro.serialno" returns the serial number as unique number Works for Android 2.3 and above
@@ -396,11 +318,6 @@ return file.getAbsolutePath();
 }//getExternalStorageDirectory
 
 public String getAppDataDir(){ return getApplicationInfo().dataDir; }
-/*
-public String getAnyDataDir(final String packageName) throws Exception {
-return getPackageManager().getPackageInfo(packageName, 0).applicationInfo.dataDir;
-}getAnyDataDir
-*/
 
 static private RequestQueue mRequestQueue = null;
 static private final int maxCacheSizeInBytes = 1024 * 1024 * 2;//= 2Mb
@@ -435,5 +352,102 @@ public void close(){//throws Exception
 	}
 	catch(Exception X){ mLog.error("pkUtility close error");}
 }//close()
+
+
+/*
+public void sendEmail(){
+	// http://stackoverflow.com/questions/8284706/send-email-via-gmail
+	final String emailSubject = new StringBuilder().append( Messages.getString( "ApplicationName" )).
+																	toString(),
+				 emailBody = AboutDevice();
+
+
+	final Intent emailIntent = new Intent( Intent.ACTION_SENDTO,
+										   Uri.fromParts( "mailto",
+											Messages.getString( "emailAddr" ),
+											null ) );
+
+	emailIntent.putExtra( Intent.EXTRA_BCC, "GAELdb.help@gmail.com" )
+					.putExtra( Intent.EXTRA_SUBJECT, emailSubject )
+					.putExtra( Intent.EXTRA_TEXT, emailBody );
+
+	startActivity( Intent.createChooser( emailIntent, "Send email:" ) );
+}// sendEmail()
+
+
+public String getAnyDataDir(final String packageName) throws Exception {
+return getPackageManager().getPackageInfo(packageName, 0).applicationInfo.dataDir;
+}getAnyDataDir
+
+//http://developer.samsung.com/technical-doc/view.do?v=T000000103
+public String getDeviceId(){
+//getDeviceId() function Returns the unique device ID. for example,the IMEI for GSM and the MEID or ESN for CDMA phones.
+	TelephonyManager telephonyManager = (TelephonyManager) getSystemService(mContext.TELEPHONY_SERVICE);
+return telephonyManager.getDeviceId();
+}//getDeviceId
+
+public String getSubscriberId(){
+// getDeviceId() function Returns the unique device ID. for example,the IMEI for GSM and the MEID or ESN for CDMA phones.
+	TelephonyManager telephonyManager = (TelephonyManager) getSystemService(mContext.TELEPHONY_SERVICE);
+return telephonyManager.getSubscriberId();
+}//getSubscriberId
+
+
+public void setMobileDataEnabled( final boolean enabled ){
+//http://stackoverflow.com/questions/9871762/android-turning-on-wifi-programmatically
+
+	final WifiManager wManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+	wManager.setWifiEnabled(enabled);
+
+	try{
+		//http://stackoverflow.com/questions/11555366/enable-disable-data-connection-in-android-programmatically
+	   final ConnectivityManager connMgr = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+	   final Class<?> conmanClass = Class.forName(connMgr.getClass().getName());
+	   final Field connectivityManagerField = conmanClass.getDeclaredField("mService");
+	   connectivityManagerField.setAccessible(true);
+	   final Object connectivityManager = connectivityManagerField.get(connMgr);
+	   final Class<?> connectivityManagerClass =  Class.forName(connectivityManager.getClass().getName());
+	   final Method setMobileDataEnabledMethod = connectivityManagerClass.getDeclaredMethod("setMobileDataEnabled", Boolean.TYPE);
+	   setMobileDataEnabledMethod.setAccessible(true);
+
+	   setMobileDataEnabledMethod.invoke(connectivityManager, Boolean.valueOf(enabled));
+	}
+	catch( Exception e ){ mLog.error( "ERROR", e ); }
+}//setMobileDataEnabled
+
+
+public boolean registerDevice(boolean FORCE){
+	final String Registration = "Registration",
+				 notYetRegistered = "";
+
+	String registered;
+	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+	try {
+//		registered = mSharedPreferences.getString(Registration, notYetRegistered);
+		registered = prefs.getString(Registration, notYetRegistered);
+
+	} catch (Exception e) { registered = notYetRegistered; }
+
+	//retVal indicates "Has the Device already been registered?"
+	boolean retVal = registered.equals(notYetRegistered);
+	if ( retVal || FORCE) {
+		//GaelException DEVICE_REGISTRATION = new GaelException(GaelErrCode.DEVICE_REGISTRATION);
+		//send device info via a silent exception report to the Server!
+	    ACRA.getErrorReporter().handleSilentException(null);
+
+	    String registrationDateTime =
+	    		new SimpleDateFormat("yyMMddHHmmss", Locale.US)
+	    			.format( Calendar.getInstance().getTime() );
+
+
+	    prefs.edit()
+			.putString(Registration, registrationDateTime)
+			.apply();
+
+	}//if
+	return retVal;
+}//registerDevice
+*/
+
 
 }//class pkUtility
