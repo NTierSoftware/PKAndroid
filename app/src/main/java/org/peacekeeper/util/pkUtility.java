@@ -321,7 +321,7 @@ public String getAppDataDir(){ return getApplicationInfo().dataDir; }
 
 static private RequestQueue mRequestQueue = null;
 static private final int maxCacheSizeInBytes = 1024 * 1024 * 2;//= 2Mb
-public RequestQueue getRequestQueue() {
+public RequestQueue getRequestQueue(){
 	if (mRequestQueue == null){
 		Cache cache = new DiskBasedCache(getCacheDir(), maxCacheSizeInBytes);
 		Network network = new BasicNetwork(new HurlStack());
@@ -329,7 +329,6 @@ public RequestQueue getRequestQueue() {
 		mRequestQueue.start();
 	}
 return mRequestQueue;
-
 }
 
 

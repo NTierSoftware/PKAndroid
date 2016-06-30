@@ -8,9 +8,11 @@ see files
 	res/values/strings.xml,
 	res/xml/authenticator.xml, and
 	res/xml/syncadapter.xml
+
 -->
-    <string name="AUTHORITY">org.peacekeeper.android.SQLite.Provider</string>
+
     <string name="accountType">peacekeeper.authenticator.com</string>
+    <string name="accountType2">com.udinic.auth_example</string>
     <string name="AuthSvcDesc">Authorizes PeaceKeeper</string>
 
 <!--
@@ -27,5 +29,11 @@ see files
     <string name="SyncSvcDesc">Syncs PeaceKeeper mobile data to the Webserver</string>
     <string name="action_settings">Settings???correct this</string>
     <string name="action_Exit">Exit</string>
+    <string name="AUTHORITY">org.peacekeeper.android</string>
+
+    <string name="label">Udinic</string>
+
+    <string name="signup_title">Create new account</string>
+    <string name="login_label">Log in</string>
 
 </resources>

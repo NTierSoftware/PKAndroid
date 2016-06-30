@@ -1,139 +1,133 @@
 // Created by John Donaldson, NTier Software Engineering on 4/7/2016.
 package org.peacekeeper.rest;
 
-import android.widget.Toast;
-
-import com.android.volley.Request.*;
 import com.android.volley.*;
-import com.android.volley.toolbox.*;
+import com.android.volley.Request.Method;
+import com.android.volley.toolbox.JsonObjectRequest;
 
 import org.json.*;
-import org.peacekeeper.crypto.*;
-import org.peacekeeper.util.*;
-import org.spongycastle.pkcs.*;
-import org.spongycastle.util.encoders.*;
+import org.peacekeeper.crypto.SecurityGuard;
+import org.spongycastle.pkcs.PKCS10CertificationRequest;
+import org.spongycastle.util.encoders.Base64;
 
 import java.io.IOException;
 import java.util.*;
 
 
 public class Post extends Get{
-public static enum URLPost{
+public enum URLPost {
 	registrations //Certificate Signature Request
-	, ACRAException
-	, testGAEL
-	;
+	, invitationReplies, invitations, tribes, ACRAException, test;
+
 }//URLPost
 
-//protected pkUtility mUtility = pkUtility.getInstance();
+//private JsonObjectRequest mJsonRequest;
 
-//public Post( URLPost aURLPost ){
 public < E extends Enum< E > > Post( E aURL ){
 	super();
 	mURL = aURL;
 
-	StringBuilder URLstr = new StringBuilder( toURL( mURL ).toString() );
-	//mLog = org.slf4j.LoggerFactory.getLogger( getClass() );
-	//String mUrlStr = toURL(url).toString();
+	//StringBuilder URLstr = new StringBuilder( toURL().toString() );
 
 	//String mUrlStr = "https://192.168.1.242:8181/GaelWebSvcGF4/rest/GAEL/status";
 	switch ( (URLPost) mURL ){
 	case registrations:
 		break;
 
-	default: break;
+	default:
+		break;
 	}//switch
 
-	final String url = URLstr.toString();
+
+
+//each enum needs priority and method, url, request, response, errlsnr
+	JsonObjectRequest mJsonRequest2 = new JsonObjectRequest( Method.PATCH, "http://192.168.1.156/",
+	                                                         getReceivedCode(), mJsonResp,
+	                                                         mErrLsnr ){
+		@Override public Map< String, String > getHeaders() throws AuthFailureError{
+			mLog.debug( "getHeaders()!!" );
+
+			HashMap< String, String > headers = new HashMap<>();
+			headers.put( "Accept", "application/json" );
+
+			return headers;
+		}
+
+		@Override public Priority getPriority(){ return Priority.NORMAL; }
+	};
 
 
 /*
-	//http://developer.android.com/training/volley/requestqueue.html
-	stringRequest = new StringRequest( Method.POST, url, mRespLsnr, mErrLsnr){
-		@Override protected Map<String, String> getParams(){
-		PKCS10CertificationRequest CSR = SecurityGuard.genCSR();
-		mLog.debug(SecurityGuard.toPEM(CSR));
-		Map<String, String>  registration = new HashMap<>();
-
-		try{
-			registration.put( "_id", msg_id.toString() );
-			boolean accepted = false;
-			registration.put( "accepted", Boolean.toString( accepted ) );
-
-			String CSRstr = Base64.toBase64String( CSR.getEncoded() );
-			registration.put( "csr", CSRstr );
-//		registration.put("deviceID", mUtility.getUniqDeviceID().toString() );
-			registration.put("deviceID", "JD deviceID" );
-
-			registration.put( "deviceOSType", "Android" );
-//			registration.put( "deviceOSVersion", mUtility.getVersion().toString() );
-			registration.put( "deviceOSVersion", "JD deviceOSVersion" );
-
-			registration.put( "keeperID", "" );
-			registration.put( "receivedCode", "" );
-			registration.put( "referredBy", "IamtheReferrerTest@boosh.com" );
-		} catch ( Exception X ){ mLog.error( X.getMessage() ); }
-
-		mLog.debug( "\nPOST :\t" + registration.toString() );
-	  return registration; }//getParams()
-	};//new StringRequest
+	Response.Listener< JSONObject > jsonResp = new Response.Listener< JSONObject >(){
+		@Override public void onResponse( JSONObject response ){
+			mLog.debug( "JSON onResponse:\t" + response.toString() );
+		}
+	};
 */
 
 
-	Response.Listener<JSONObject> jsonResp = new Response.Listener<JSONObject>() {
-		@Override
-		public void onResponse(JSONObject response) {
-			mLog.debug("JSON onResponse:\t" + response.toString());
-		}
+//each enum needs priority and method, url, request, response, errlsnr
+	mJsonRequest = new JsonObjectRequest( Method.POST, toURL().toString(), getRegistration(),
+	                                      mJsonResp, mErrLsnr ){
+		/*
+			@Override public Map<String, String> getHeaders() throws AuthFailureError{
+				mLog.debug( "getHeaders()!!" );
+
+				HashMap<String, String> headers = new HashMap<>();
+				headers.put("Accept", "application/json");
+		//		headers.put("Accept", "application/json; charset=utf-8");
+		//		headers.put("Content-Type", "application/json; charset=utf-8");
+
+				return headers;
+			}
+		*/
+		@Override public Priority getPriority(){ return mPriority; }
 	};
 
-	JsonObjectRequest req = new JsonObjectRequest(Method.POST, url, getRegistration(),jsonResp, mErrLsnr){
-	@Override public Map<String, String> getHeaders() throws AuthFailureError{
-		mLog.debug( "getHeaders()!!" );
-
-		HashMap<String, String> headers = new HashMap<>();
-		headers.put("Content-Type", "application/json; charset=utf-8");
-		return headers;
-	}};
-
-	mUtility.getRequestQueue().add( req );
 }//Post
-
 
 
 private JSONObject getRegistration(){
 	PKCS10CertificationRequest CSR = SecurityGuard.genCSR();
-	mLog.debug(SecurityGuard.toPEM(CSR));
+	mLog.debug( SecurityGuard.toPEM( CSR ) );
 
 	JSONObject registration = new JSONObject();
 	try{
-		registration.put( "_id", msg_id.toString() );
 		boolean accepted = false;
-//		registration.put( "accepted", Boolean.toString( accepted ) );
-		registration.put( "accepted", accepted);
-
 		String CSRstr = Base64.toBase64String( CSR.getEncoded() );
-		registration.put( "csr", CSRstr );
 
-//		registration.put("deviceId", mUtility.getUniqDeviceID().toString() );
-		registration.put("deviceId", "" );
+		registration.put( "_id", msg_id.toString() )
+		            .put( "accepted", accepted )
+		            .put( "csr", CSRstr )
+		            .put( "deviceId", mUtility.getUniqDeviceID().toString() )
+		            .put( "deviceOSType", "Android" )
+		            .put( "deviceOSVersion", mUtility.getVersion().toString() )
+		            .put( "keeperId", "" )
+		            .put( "receivedCode", "" )
+		            .put( "referredBy", "IamtheReferrerTest@boosh.com" );
 
-		registration.put( "deviceOSType", "Android" );
-//		registration.put( "deviceOSVersion", mUtility.getVersion().toString() );
-		registration.put( "deviceOSVersion", "JD deviceOSVersion" );
-
-		registration.put( "keeperId", "" );
-		registration.put( "receivedCode", "" );
-		registration.put( "referredBy", "IamtheReferrerTest@boosh.com" );
-		//registration.put(rowObject);
-	}	catch( IOException | JSONException X ){ mLog.error( X.getMessage() ); }
+	}catch ( IOException | JSONException X ){ mLog.error( X.getMessage() ); }
 
 	mLog.debug( "\nPOST :\t" + registration.toString() );
-return registration;
+	return registration;
 }//getRegistration
+
+private JSONObject getReceivedCode(){
+
+	JSONObject ReceivedCode = new JSONObject();
+	try{
+		ReceivedCode.put( "receivedCode", "12345678" );
+	}catch ( JSONException X ){ mLog.error( X.getMessage() ); }
+
+	mLog.debug( "\nPATCH :\t" + ReceivedCode.toString() );
+	return ReceivedCode;
+}//getReceivedCode
 
 
 }//class Post
+
+
+
 
 /*
 //http://stackoverflow.com/questions/19837820/volley-jsonobjectrequest-post-request-not-working/19945676#19945676

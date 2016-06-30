@@ -21,30 +21,28 @@ package org.peacekeeper.crypto;
 
 
 import org.peacekeeper.exception.*;
-import org.peacekeeper.util.*;
+import org.peacekeeper.util.pkUtility;
 import org.slf4j.*;
-import org.spongycastle.asn1.*;
 import org.spongycastle.asn1.pkcs.PKCSObjectIdentifiers;
-import org.spongycastle.asn1.sec.*;
+import org.spongycastle.asn1.sec.SECNamedCurves;
 import org.spongycastle.asn1.x500.*;
 import org.spongycastle.asn1.x500.style.*;
 import org.spongycastle.asn1.x509.*;
 import org.spongycastle.cert.*;
 import org.spongycastle.cert.jcajce.*;
-import org.spongycastle.jce.*;
-import org.spongycastle.jce.spec.*;
-import org.spongycastle.openssl.jcajce.*;
+import org.spongycastle.jce.ECNamedCurveTable;
+import org.spongycastle.jce.spec.ECParameterSpec;
+import org.spongycastle.openssl.jcajce.JcaPEMWriter;
 import org.spongycastle.operator.*;
-import org.spongycastle.operator.jcajce.*;
-import org.spongycastle.pkcs.PKCS10CertificationRequest;
+import org.spongycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.spongycastle.pkcs.*;
-import org.spongycastle.pkcs.jcajce.*;
-import org.spongycastle.util.io.pem.*;
+import org.spongycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
+import org.spongycastle.util.io.pem.PemObject;
 
 import java.io.*;
-import java.math.*;
+import java.math.BigInteger;
 import java.security.*;
-import java.security.Provider.*;
+import java.security.Provider.Service;
 import java.security.cert.*;
 import java.util.*;
 
@@ -59,7 +57,6 @@ static private final char[] keyStorePW = "PeaceKeeperKeyStorePW".toCharArray();
 
 static private final String ECDSA = "ECDSA"
 							, SHA256withECDSA = "SHA256withECDSA"
-							//, charset = "UTF-8"
 							, NamedCurve = "P-256" //"secp256r1"
 							, providerName = PROVIDER.getName()
 							, Alias = "PK." //=PeaceKeeper
@@ -70,18 +67,18 @@ static private final String ECDSA = "ECDSA"
 							, keyStoreFilename = Alias + keyStoreType
 							//, uniqID = UUID.randomUUID().toString()
 							, deviceID = UUID.randomUUID().toString()
-							, emailAddr = "Vince@boosh.com";
+							, emailAddr = "ntiersoftwareengineering@gmail.com";
 
 static private KeyPair KEYPAIR = null;
 
 static private KeyStore KEYSTORE = null;
-static private byte[] hash = null;//, signature = null;
+static private byte[] hash = null;
 //end static
 private String message = null;
 
-public SecurityGuard( final String message ){
+public SecurityGuard( final String aMessage ){
 	initSecurity();
-	this.message = message;
+	this.message = aMessage;
 }
 
 static public void initSecurity(){ initSecurity( PROVIDER ); }
@@ -96,10 +93,14 @@ static public PKCS10CertificationRequest genCSR(){
 		GeneralNames subjectAltName = new GeneralNames(
 				new GeneralName(GeneralName.rfc822Name, emailAddr));
 
-//http://stackoverflow.com/questions/12863235/csr-generated-with-bouncycastle-missing-public-key-and-attributes
-//http://stackoverflow.com/questions/34169954/create-pkcs10-request-with-subject-alternatives-using-bouncy-castle-in-java
 		ExtensionsGenerator extnsnGenr = new ExtensionsGenerator();
 		extnsnGenr.addExtension(Extension.subjectAlternativeName, false, subjectAltName);
+
+
+//http://stackoverflow.com/questions/12863235/csr-generated-with-bouncycastle-missing-public-key-and-attributes
+//http://stackoverflow.com/questions/34169954/create-pkcs10-request-with-subject-alternatives-using-bouncy-castle-in-java
+//		//extnsnGenr.addExtension(Extension.subjectAlternativeName, false, subjectAltName);
+		//extnsnGenr.addExtension(Extension.subjectAlternativeName, false, new GeneralName(GeneralName.rfc822Name, emailAddr) );
 
 		PKCS10CertificationRequestBuilder p10Builder = new JcaPKCS10CertificationRequestBuilder(
 				getX500Name()
@@ -151,8 +152,8 @@ static public void listAlgorithms( String algFilter ){
 		String providerStr = String.format( "%s/%s/%f\n", p.getName(), p.getInfo(),
 		                                    p.getVersion() );
 		mLog.debug( providerStr );
-		java.util.Set< Service > services = p.getServices();
-		java.util.List< String > algs = new java.util.ArrayList< String >();
+		Set< Service > services = p.getServices();
+		List< String > algs = new ArrayList< String >();
 		for ( Service s : services ){
 			boolean match = true;
 			if ( algFilter != null ){
@@ -167,8 +168,7 @@ static public void listAlgorithms( String algFilter ){
 			}
 		}
 
-
-		java.util.Collections.sort( algs );
+		Collections.sort( algs );
 		for ( String alg : algs ) mLog.debug( "\t" + alg );
 		mLog.debug( "" );
 	}
@@ -233,7 +233,7 @@ static void initSecurity( Provider provider ){
 	Security.removeProvider( provider.getName() );
 
 	int insertProviderAt = Security.insertProviderAt( provider, 1 );
-	mLog.debug( "insertProviderAt:\t" + Integer.toString( insertProviderAt ) );
+	//mLog.debug( "insertProviderAt:\t" + Integer.toString( insertProviderAt ) );
 	//mLog.debug( listProviders() );
 }//initSecurity
 
@@ -255,8 +255,7 @@ static private KeyPair getKeyPair(){
 		else genKeyPair();
 	}//try
 	catch ( KeyStoreException | NoSuchAlgorithmException | UnrecoverableEntryException X ){
-		pkException CRYPTOERR = new pkException( pkErrCode.CRYPTO ).set( "Crypto getKeyPair err",
-		                                                                 X );
+		pkException CRYPTOERR = new pkException( pkErrCode.CRYPTO ).set( "Crypto getKeyPair err", X );
 		mLog.error( CRYPTOERR.toString() );
 		KEYPAIR = null;
 		throw CRYPTOERR;
@@ -299,7 +298,6 @@ static private X500Name getX500Name(){
 			//.addRDN( BCStrictStyle.EmailAddress, emailAddr )
 			.addRDN( BCStrictStyle.POSTAL_CODE, testPostalCode )
 			.addRDN( BCStrictStyle.SERIALNUMBER, deviceID )
-//			.addRDN( BCStrictStyle.C, deviceID )
 			.addRDN( BCStrictStyle.C, "US" )
 
 			.build();

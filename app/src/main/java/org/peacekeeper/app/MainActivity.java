@@ -112,7 +112,7 @@ private pkUtility mUtility;
 	mLog.debug( "android.os.Build.SERIAL:\t" + android.os.Build.SERIAL ); */
 
 	//new Get( URLGet.status ).submit();
-	new Post( URLPost.registrations );//.submit();
+	new Post( URLPost.registrations ).submit();
 }//onStart()
 
 @Override protected void onStop(){
