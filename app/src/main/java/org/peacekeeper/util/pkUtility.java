@@ -265,17 +265,24 @@ private String getANDROID_ID(){
 return Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
 }//getANDROID_ID
 
+static public JSONObject errJSONObject;
+static{
+	try{ errJSONObject = new JSONObject().put( "errJSONObject", "ERROR" ); }
+	catch ( JSONException aE ){}
+}
+
 public JSONObject getUniqDeviceID(){
+
 	JSONObject uniqDeviceID = new JSONObject();
 	try {
 		uniqDeviceID.put("ANDROID_ID", getANDROID_ID() )
 					.put("SERIAL_NO", getSystemProperty("ro.serialno"))
 					.put("BUILD", android.os.Build.SERIAL)
-					.put("randomUUID", UUID.randomUUID().toString() )
+					//.put("randomUUID", UUID.randomUUID().toString() )
 				;
 	} catch (JSONException e) {
-		e.printStackTrace();
-		uniqDeviceID = null;
+		mLog.error( e.getMessage() );
+		uniqDeviceID = errJSONObject;
 	}
 return uniqDeviceID;
 }//getUniqDeviceID
@@ -290,7 +297,7 @@ public JSONObject getVersion(){
 		;
 	} catch (JSONException e) {
 		e.printStackTrace();
-		version = null;
+		version = errJSONObject;
 	}
 return version;
 }//getVersion

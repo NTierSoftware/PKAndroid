@@ -8,14 +8,9 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.*;
 
-import com.android.volley.Request.Method;
-
-import udinic.accounts_authenticator_example.authentication.AccountGeneral;
-
 import org.json.*;
 import org.peacekeeper.crypto.SecurityGuard;
-import org.peacekeeper.rest.*;
-import org.peacekeeper.rest.Post.URLPost;
+import org.peacekeeper.rest.pkRequest;
 import org.peacekeeper.rest.pkRequest.pkURL;
 import org.peacekeeper.util.pkUtility;
 import org.slf4j.LoggerFactory;
@@ -27,6 +22,7 @@ import java.io.IOException;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.util.ContextInitializer;
 import ch.qos.logback.core.joran.spi.JoranException;
+import udinic.accounts_authenticator_example.authentication.AccountGeneral;
 
 
 import static udinic.accounts_authenticator_example.authentication.AccountGeneral.AUTHTOKEN_TYPE_FULL_ACCESS;
@@ -126,10 +122,14 @@ private boolean mInvalidate;
 //chained HTTP requests for registration:
 // 1) POST registrations ->  2) PATCH registrations ->  3) GET devices
 
-	pkRequest ChainReg3 = new pkRequest(pkURL.devices, null ){
-		@Override public JSONObject getRequest( final JSONObject response ){ return null; }
+	pkRequest ChainReg3 = new pkRequest(pkURL.devices, null )	{
+		@Override public JSONObject getRequest( final JSONObject response ){
+			SecurityGuard.setEntry(response);
+			return null; }
 	} ;
+
 	pkRequest ChainReg2 = new pkRequest(pkURL.registrations2, ChainReg3  ){
+		//pkRequest ChainReg2 = new pkRequest(pkURL.registrations2, null  ){
 		@Override public JSONObject getRequest( final JSONObject response ){ return getReceivedCode(); }
 	};
 
@@ -139,7 +139,6 @@ private boolean mInvalidate;
 	};
 
 	ChainReg1.submit();
-
 }//onStart()
 
 
@@ -149,20 +148,23 @@ private JSONObject getRegistration(){
 
 	JSONObject registration = new JSONObject();
 	try{
-		boolean accepted = false;
+		//boolean accepted = false;
 		String CSRstr = Base64.toBase64String( CSR.getEncoded() );
 
 		//registration.put( "_id", msg_id.toString() );
-		registration.put( "accepted", accepted )
+		registration.put( "accepted", false )
 		            .put( "csr", CSRstr )
 		            .put( "deviceId", mUtility.getUniqDeviceID().toString() )
 		            .put( "deviceOSType", "Android" )
 		            .put( "deviceOSVersion", mUtility.getVersion().toString() )
 		            .put( "keeperId", "" )
 		            .put( "receivedCode", "" )
-		            .put( "referredBy", "IamtheReferrerTest@boosh.com" );
+		            .put( "referredBy", "JDtest@boosh.com" );
 
-	}catch ( IOException | JSONException X ){ mLog.error( X.getMessage() ); }
+	}catch ( IOException | JSONException X ){
+		mLog.error( X.getMessage() );
+		registration = pkUtility.errJSONObject;
+	}
 
 	mLog.debug( "\nPOST :\t" + registration.toString() );
 	return registration;
@@ -170,11 +172,13 @@ private JSONObject getRegistration(){
 
 
 private JSONObject getReceivedCode(){
-
 	JSONObject ReceivedCode = new JSONObject();
 	try{
 		ReceivedCode.put( "receivedCode", "12345678" );
-	}catch ( JSONException X ){ mLog.error( X.getMessage() ); }
+	}catch ( JSONException X ){
+		mLog.error( X.getMessage() );
+		ReceivedCode = pkUtility.errJSONObject;
+	}
 
 	mLog.debug( "\nReceivedCode PATCH :\t" + ReceivedCode.toString() );
 	return ReceivedCode;

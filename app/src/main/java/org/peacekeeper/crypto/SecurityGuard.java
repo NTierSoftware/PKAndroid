@@ -20,9 +20,13 @@ package org.peacekeeper.crypto;
 */
 
 
+import android.util.Base64;
+
+import org.json.*;
 import org.peacekeeper.exception.*;
 import org.peacekeeper.util.pkUtility;
 import org.slf4j.*;
+import org.spongycastle.asn1.ASN1ObjectIdentifier;
 import org.spongycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.spongycastle.asn1.sec.SECNamedCurves;
 import org.spongycastle.asn1.x500.*;
@@ -42,9 +46,12 @@ import org.spongycastle.util.io.pem.PemObject;
 import java.io.*;
 import java.math.BigInteger;
 import java.security.*;
+import java.security.KeyStore.*;
 import java.security.Provider.Service;
 import java.security.cert.*;
 import java.util.*;
+
+import javax.crypto.SecretKey;
 
 
 // http://stackoverflow.com/questions/18244630/elliptic-curve-with-digital-signature-algorithm-ecdsa-implementation-on-bouncy
@@ -65,16 +72,17 @@ static private final String ECDSA = "ECDSA"
 							, certKeyAlias = Alias + "Cert"
 							, keyStoreType = "pkcs12"
 							, keyStoreFilename = Alias + keyStoreType
-							//, uniqID = UUID.randomUUID().toString()
 							, deviceID = UUID.randomUUID().toString()
 							, emailAddr = "ntiersoftwareengineering@gmail.com";
 
-static private KeyPair KEYPAIR = null;
+static private KeyPair mKEYPAIR = null;
+static private KeyStore mKEYSTORE = null;
 
-static private KeyStore KEYSTORE = null;
 static private byte[] hash = null;
 //end static
 private String message = null;
+
+public enum entryType {deviceID, keeperID}
 
 public SecurityGuard( final String aMessage ){
 	initSecurity();
@@ -153,7 +161,7 @@ static public void listAlgorithms( String algFilter ){
 		                                    p.getVersion() );
 		mLog.debug( providerStr );
 		Set< Service > services = p.getServices();
-		List< String > algs = new ArrayList< String >();
+		List< String > algs = new ArrayList<>();
 		for ( Service s : services ){
 			boolean match = true;
 			if ( algFilter != null ){
@@ -182,13 +190,13 @@ static public void listCurves(){
 
 static public void listKeyStore(){
 	try{
-		Enumeration< String > aliases = KEYSTORE.aliases();
+		Enumeration< String > aliases = mKEYSTORE.aliases();
 
-		mLog.debug( ( aliases.hasMoreElements() ? "" : "Empty" ) + "KEYSTORE contents" );
+		mLog.debug( ( aliases.hasMoreElements() ? "" : "Empty" ) + "mKEYSTORE contents" );
 		while ( aliases.hasMoreElements() ){
 			mLog.debug( ":\t" + aliases.nextElement().toString() );
 		}
-	}catch ( Exception X ){ mLog.debug( "Empty KEYSTORE contents" ); }
+	}catch ( Exception X ){ mLog.debug( "Empty mKEYSTORE contents" ); }
 }//listKeyStore
 
 static public String listProviders(){
@@ -237,46 +245,109 @@ static void initSecurity( Provider provider ){
 	//mLog.debug( listProviders() );
 }//initSecurity
 
+static public void setEntry(final JSONObject response ){
+	mKEYSTORE = getKeyStore();
+	listKeyStore();
+
+	SecretKey deviceID = new SecretKey(){
+		@Override public String getAlgorithm(){ return null; }
+
+		@Override public String getFormat(){ return null; }
+
+		@Override public byte[] getEncoded(){
+			String retVal;
+			try{
+				retVal = response.getString( entryType.deviceID.name() );
+			}catch ( JSONException aE ){
+				aE.printStackTrace();
+				retVal = "";
+			}
+			return retVal.getBytes();
+		}
+	},
+	keeperID = 	new SecretKey(){
+		@Override public String getAlgorithm(){ return null; }
+
+		@Override public String getFormat(){ return null; }
+
+		@Override public byte[] getEncoded(){
+			String retVal;
+			try{
+				retVal = response.getString( entryType.keeperID.name() );
+			}catch ( JSONException aE ){
+				aE.printStackTrace();
+				retVal = "";
+			}
+			return retVal.getBytes();
+		}
+	};
+
+
+
+	KeyStore.SecretKeyEntry deviceIDEntry = new SecretKeyEntry( deviceID )
+							, keeperIDEntry = new SecretKeyEntry( keeperID );
+	try{
+		mKEYSTORE.setEntry(entryType.deviceID.name(), deviceIDEntry, null   );
+		mKEYSTORE.setEntry(entryType.keeperID.name(), keeperIDEntry, null   );
+	}catch ( KeyStoreException aE ){
+		aE.printStackTrace();
+	}
+
+	storeKey();
+}//setEntry
+
+static public String getEntry(entryType aEntryType){
+	String retVal;
+	try{
+		KeyStore.SecretKeyEntry secretKeyEntry = (SecretKeyEntry) mKEYSTORE.getEntry( aEntryType.name(), null );
+		retVal = new String( secretKeyEntry.getSecretKey().getEncoded());
+	}catch ( NoSuchAlgorithmException |UnrecoverableEntryException |KeyStoreException X ){
+		mLog.error( X.getMessage() );
+		retVal = ""; }
+return retVal;
+}
+
 static private KeyPair getKeyPair(){
-	mLog.debug( "KEYPAIR " + ( KEYPAIR == null ? "" : "NOT " ) + "null" );
+	mLog.debug( "mKEYPAIR " + ( mKEYPAIR == null ? "" : "NOT " ) + "null" );
 
-	if ( KEYPAIR != null ){return KEYPAIR; }
-	mLog.debug( "KEYSTORE " + ( KEYSTORE == null ? "" : "NOT " ) + "null" );
+	if ( mKEYPAIR != null ){return mKEYPAIR; }
+	mLog.debug( "mKEYSTORE " + ( mKEYSTORE == null ? "" : "NOT " ) + "null" );
 
-	KEYSTORE = getKeyStore();
+	mKEYSTORE = getKeyStore();
 	listKeyStore();
 
 	try{
-		if ( KEYSTORE.containsAlias( priKeyAlias ) ){
-			PrivateKey privateKey = (PrivateKey) KEYSTORE.getKey( priKeyAlias, keyStorePW );
-			PublicKey  publicKey  = (PublicKey)  KEYSTORE.getKey( pubKeyAlias, keyStorePW );
-			//KEYPAIR = new KeyPair(publicKey, privateKey );
+		if ( mKEYSTORE.containsAlias( priKeyAlias ) ){
+			PrivateKey privateKey = (PrivateKey) mKEYSTORE.getKey( priKeyAlias, keyStorePW );
+			PublicKey  publicKey  = (PublicKey)  mKEYSTORE.getKey( pubKeyAlias, keyStorePW );
+			//mKEYPAIR = new KeyPair(publicKey, privateKey );
 		}//if
 		else genKeyPair();
 	}//try
 	catch ( KeyStoreException | NoSuchAlgorithmException | UnrecoverableEntryException X ){
 		pkException CRYPTOERR = new pkException( pkErrCode.CRYPTO ).set( "Crypto getKeyPair err", X );
 		mLog.error( CRYPTOERR.toString() );
-		KEYPAIR = null;
+		mKEYPAIR = null;
 		throw CRYPTOERR;
 	}
 
-	return KEYPAIR;
+	return mKEYPAIR;
 }//getKeyPair
 
+
 static private KeyStore getKeyStore(){
-	if ( KEYSTORE == null ){
+	if ( mKEYSTORE == null ){
 		if ( keyStoreFileExists() ){
 			try{
 				InputStream is = new FileInputStream( keyStoreFilename );
-				KEYSTORE = KeyStore.getInstance( keyStoreType, providerName );
-				KEYSTORE.load( is, keyStorePW );
+				mKEYSTORE = KeyStore.getInstance( keyStoreType, providerName );
+				mKEYSTORE.load( is, keyStorePW );
 				is.close();
 			}catch ( Exception X ){ genKeyStore(); }
 		}
 		else genKeyStore();
 	}
-	return KEYSTORE;
+	return mKEYSTORE;
 }//getKeyStore
 
 static private boolean keyStoreFileExists(){
@@ -285,6 +356,8 @@ static private boolean keyStoreFileExists(){
 			.isFile();
 }//keyStoreFileExists
 
+//http://stackoverflow.com/questions/16412315/creating-custom-x509-v3-extensions-in-java-with-bouncy-castle
+static private final ASN1ObjectIdentifier device = new ASN1ObjectIdentifier( "2.5.6.14");
 static private X500Name getX500Name(){
 /*
 	"userId"		: <uuid>,		# "1ccf1ca9-ddf1-4d30-ba50-b0122db35f32"
@@ -292,13 +365,15 @@ static private X500Name getX500Name(){
 	"name"			: <string>,		# "Vince"
 */
 
-	final String testPostalCode = "94602-4105";
-	return new X500NameBuilder( BCStrictStyle.INSTANCE )
-			.addRDN( BCStyle.CN, Alias )
+//	final String testPostalCode = "94602-4105";
+	final String testPostalCode = "92117";
+	return new X500NameBuilder( BCStyle.INSTANCE )
+//			.addRDN( BCStyle.CN, Alias )
+			.addRDN( BCStyle.CN, "testCN" )
 			//.addRDN( BCStrictStyle.EmailAddress, emailAddr )
-			.addRDN( BCStrictStyle.POSTAL_CODE, testPostalCode )
-			.addRDN( BCStrictStyle.SERIALNUMBER, deviceID )
-			.addRDN( BCStrictStyle.C, "US" )
+			.addRDN( BCStyle.POSTAL_CODE, testPostalCode )
+			.addRDN( BCStyle.C, "US" )
+			.addRDN( device, deviceID )
 
 			.build();
 }//getX500Name
@@ -334,8 +409,8 @@ static private X509Certificate genRootCertificate( KeyPair kp ){
 				expire,
 				getX500Name(),
 				kp.getPublic()
-		)
-				;
+		);
+
 		X509CertificateHolder certHolder = certGen.build( signer );
 
 		certificate = new JcaX509CertificateConverter()
@@ -355,19 +430,18 @@ static private X509Certificate genRootCertificate( KeyPair kp ){
 static private void genKeyStore(){
 	unRegister();
 	try{
-		KEYSTORE = KeyStore.getInstance( keyStoreType, providerName );
+		mKEYSTORE = KeyStore.getInstance( keyStoreType, providerName );
 //Pass null as the stream argument to initialize an empty KeyStore or to initialize a KeyStore which does not rely on an InputStream.
-		KEYSTORE.load( null, keyStorePW );
+		mKEYSTORE.load( null, keyStorePW );
 		genKeyPair();
 		X509Certificate[] selfSignedCert = new X509Certificate[ 1 ];
-		selfSignedCert[ 0 ] = genRootCertificate( KEYPAIR );
+		selfSignedCert[ 0 ] = genRootCertificate( mKEYPAIR );
 
-		KEYSTORE.setCertificateEntry( certKeyAlias, selfSignedCert[ 0 ] );
-		KEYSTORE.setKeyEntry( priKeyAlias, KEYPAIR.getPrivate(), keyStorePW, selfSignedCert );
-
+		mKEYSTORE.setCertificateEntry( certKeyAlias, selfSignedCert[ 0 ] );
+		mKEYSTORE.setKeyEntry( priKeyAlias, mKEYPAIR.getPrivate(), keyStorePW, selfSignedCert );
 		storeKey();
 
-		mLog.debug( "KEYSTORE init'd" );
+		mLog.debug( "mKEYSTORE init'd" );
 	}catch ( KeyStoreException | NoSuchProviderException
 			| IOException | NoSuchAlgorithmException | CertificateException X ){
 		pkException CRYPTOERR = new pkException( pkErrCode.CRYPTO ).set( "genKeyStore err", X );
@@ -415,11 +489,11 @@ static private void genKeyPair(){
 		throw CRYPTOERR;
 	}
 
-	KEYPAIR = kpg.generateKeyPair();
+	mKEYPAIR = kpg.generateKeyPair();
 }//genKeyPair
 
 static private byte[] genNonce(){
-//http://stackoverflow.com/questions/5683206/how-to-create-an-array-of-20-random-bytes
+// http://stackoverflow.com/questions/5683206/how-to-create-an-array-of-20-random-bytes
 	final int nonceLen = 32;
 	byte[] nonce = new byte[ nonceLen ];
 	new SecureRandom().nextBytes( nonce );
@@ -434,41 +508,41 @@ static private void storeKey(){
 
 	File file = new File( path, keyStoreFilename );
 	file.getParentFile().mkdirs();
-	mLog.debug( "storeKey KEYSTORE file: " + file.getAbsolutePath() );
+	mLog.debug( "storeKey mKEYSTORE file: " + file.getAbsolutePath() );
 
 	try{
-		KEYSTORE.store( new FileOutputStream( file ), keyStorePW );
+		mKEYSTORE.store( new FileOutputStream( file ), keyStorePW );
 	}catch ( FileNotFoundException X ){
 		pkException CRYPTOERR = new pkException( pkErrCode.CRYPTO ).set( "storeKey err", X );
-		;
+
 		mLog.error( CRYPTOERR.toString() );
 		throw CRYPTOERR;
 	}catch ( CertificateException | NoSuchAlgorithmException | KeyStoreException | IOException X ){
 		pkException CRYPTOERR = new pkException( pkErrCode.CRYPTO ).set( "storeKey err", X );
-		;
+
 		mLog.error( CRYPTOERR.toString() );
 		throw CRYPTOERR;
 	}
 }//storeKey
 
-static private boolean unRegister(){//purges KEYSTORE
+static private boolean unRegister(){//purges mKEYSTORE
 	boolean unRegister = !keyStoreFileExists();
 	if ( !unRegister ){
 		try{
 			String path = pkUtility.getInstance().getAppDataDir();
 			File fKeyStore = new File( path, keyStoreFilename );
 			InputStream is = new FileInputStream( fKeyStore );
-			KEYSTORE = KeyStore.getInstance( keyStoreType, providerName );
-			KEYSTORE.load( is, keyStorePW );
+			mKEYSTORE = KeyStore.getInstance( keyStoreType, providerName );
+			mKEYSTORE.load( is, keyStorePW );
 			listKeyStore();
 
-			Enumeration< String > aliases = KEYSTORE.aliases();
+			Enumeration< String > aliases = mKEYSTORE.aliases();
 			while ( aliases.hasMoreElements() ){
-				KEYSTORE.deleteEntry( aliases.nextElement().toString() );
+				mKEYSTORE.deleteEntry( aliases.nextElement().toString() );
 			}
 			is.close();
-			KEYSTORE = null;
-			KEYPAIR = null;
+			mKEYSTORE = null;
+			mKEYPAIR = null;
 			unRegister = fKeyStore.delete();
 		}catch ( Exception X ){unRegister = false; }
 	}
@@ -482,7 +556,7 @@ KeyStore contains valid certificate
 static private boolean isRegistered(){//TODO isRegistered
 	boolean isRegistered = false;
 
-	if ( KEYSTORE == null ){
+	if ( mKEYSTORE == null ){
 		if ( keyStoreFileExists() ){
 		}
 	}
@@ -550,6 +624,41 @@ private byte[] getSignature(){
 }//getSignature
 */
 
+/*
+instructions for generating a PKC authentication-token:
+		- Generate a random 32-byte Nonce in a byte-array, using your platform's equivalent of linux' os.urandom( 32 ).
+		- Sign the Nonce with the user's PrivateKey, storing the signature in a byte-array.
+		- Concatenate the Nonce and the Signature into a single byte-array.
+		- Encode the byte-array as a base64 string - this bocomes our security-token.
+		- Combine the user's userId, deviceId, and security-token into a string with the following format:
+
+		"PEACEKEEPER-TOKEN userId,deviceId:security-token”
+*/
+public static String getAuthToken(){
+	StringBuilder secToken = new StringBuilder() ;
+	try{
+		byte[] nonce = genNonce();
+
+		Signature signature = Signature.getInstance( SHA256withECDSA );
+
+		signature.initSign( getKeyPair().getPrivate() );
+		signature.update( nonce );
+
+		byte[] sign = signature.sign()
+			   , securityToken = new byte[nonce.length + sign.length];
+		System.arraycopy(nonce, 0, securityToken, 0, nonce.length);
+		System.arraycopy(sign, 0, securityToken, nonce.length, sign.length);
+//TODO userid???
+		secToken.append("PEACEKEEPER-TOKEN ")
+				.append( getEntry( entryType.deviceID ) )
+				.append( ":" )
+				.append( Base64.encodeToString( securityToken, Base64.DEFAULT ) );
+
+	}
+	catch ( SignatureException |NoSuchAlgorithmException |InvalidKeyException X ){ mLog.error( X.getMessage() ); }
+
+return secToken.toString();
+}//getAuthToken
 }//class SecurityGuard
 
 /*
