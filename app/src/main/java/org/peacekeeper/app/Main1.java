@@ -116,6 +116,7 @@ private boolean mInvalidate;
 	mLog.trace( "onStart():\t" );
 	super.onStart();
 
+	//SecurityGuard.listAlgorithms(null);
 	//new Get( URLGet.status ).submit();
 	//new Post( URLPost.registrations ).submit();
 
@@ -124,13 +125,15 @@ private boolean mInvalidate;
 
 	pkRequest ChainReg3 = new pkRequest(pkURL.devices, null )	{
 		@Override public JSONObject getRequest( final JSONObject response ){
-			SecurityGuard.setEntry(response);
+			SecurityGuard.SetEntries( response );
 			return null; }
 	} ;
 
 	pkRequest ChainReg2 = new pkRequest(pkURL.registrations2, ChainReg3  ){
 		//pkRequest ChainReg2 = new pkRequest(pkURL.registrations2, null  ){
-		@Override public JSONObject getRequest( final JSONObject response ){ return getReceivedCode(); }
+		@Override public JSONObject getRequest( final JSONObject response ){
+			//mLog.debug("ChainReg2 header:\t" + this.mPkURL.mHeader.toString());
+			return getReceivedCode(); }
 	};
 
 

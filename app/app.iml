@@ -82,17 +82,15 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.support/support-v4/23.4.0/jars" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.support/support-vector-drawable/23.4.0/jars" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.volley/volley/1.0.0/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-analytics-impl/9.0.2/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-analytics/9.0.2/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-base/9.0.2/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-basement/9.0.2/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-gcm/9.0.2/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-iid/9.0.2/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-location/9.0.2/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-maps/9.0.2/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-tasks/9.0.2/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.firebase/firebase-common/9.0.2/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.onesignal/OneSignal/2.3.0/jars" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-analytics-impl/9.2.0/jars" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-analytics/9.2.0/jars" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-base/9.2.0/jars" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-basement/9.2.0/jars" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-gcm/9.2.0/jars" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-iid/9.2.0/jars" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-location/9.2.0/jars" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.google.android.gms/play-services-tasks/9.2.0/jars" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.onesignal/OneSignal/2.6.0/jars" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental-safeguard" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/instant-run-support" />
@@ -110,32 +108,30 @@
     <orderEntry type="jdk" jdkName="Android API 23 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="support-annotations-23.4.0" level="project" />
-    <orderEntry type="library" exported="" name="gson-2.6.2" level="project" />
-    <orderEntry type="library" exported="" name="play-services-base-9.0.2" level="project" />
+    <orderEntry type="library" exported="" name="play-services-base-9.2.0" level="project" />
     <orderEntry type="library" exported="" name="core-1.54.0.0" level="project" />
     <orderEntry type="library" exported="" name="logback-android-core-1.1.1-4" level="project" />
     <orderEntry type="library" exported="" name="recyclerview-v7-23.1.1" level="project" />
     <orderEntry type="library" exported="" name="animated-vector-drawable-23.4.0" level="project" />
     <orderEntry type="library" exported="" name="support-v4-23.4.0" level="project" />
     <orderEntry type="library" exported="" name="support-vector-drawable-23.4.0" level="project" />
-    <orderEntry type="library" exported="" name="OneSignal-2.3.0" level="project" />
-    <orderEntry type="library" exported="" name="slf4j-api-1.7.6" level="project" />
+    <orderEntry type="library" exported="" name="slf4j-api-1.7.21" level="project" />
+    <orderEntry type="library" exported="" name="OneSignal-2.6.0" level="project" />
     <orderEntry type="library" exported="" name="appcompat-v7-23.4.0" level="project" />
-    <orderEntry type="library" exported="" name="firebase-common-9.0.2" level="project" />
-    <orderEntry type="library" exported="" name="play-services-gcm-9.0.2" level="project" />
-    <orderEntry type="library" exported="" name="play-services-basement-9.0.2" level="project" />
-    <orderEntry type="library" exported="" name="play-services-maps-9.0.2" level="project" />
-    <orderEntry type="library" exported="" name="play-services-iid-9.0.2" level="project" />
-    <orderEntry type="library" exported="" name="play-services-analytics-impl-9.0.2" level="project" />
-    <orderEntry type="library" exported="" name="play-services-analytics-9.0.2" level="project" />
-    <orderEntry type="library" exported="" name="play-services-tasks-9.0.2" level="project" />
+    <orderEntry type="library" exported="" name="play-services-gcm-9.2.0" level="project" />
+    <orderEntry type="library" exported="" name="play-services-basement-9.2.0" level="project" />
+    <orderEntry type="library" exported="" name="play-services-iid-9.2.0" level="project" />
+    <orderEntry type="library" exported="" name="play-services-analytics-impl-9.2.0" level="project" />
+    <orderEntry type="library" exported="" name="play-services-analytics-9.2.0" level="project" />
+    <orderEntry type="library" exported="" name="play-services-tasks-9.2.0" level="project" />
     <orderEntry type="library" exported="" name="pg-1.54.0.0" level="project" />
+    <orderEntry type="library" exported="" name="gson-2.7" level="project" />
     <orderEntry type="library" exported="" name="apktool-lib-1.4.4-3" level="project" />
     <orderEntry type="library" exported="" name="design-23.1.1" level="project" />
     <orderEntry type="library" exported="" name="prov-1.54.0.0" level="project" />
     <orderEntry type="library" exported="" name="pkix-1.54.0.0" level="project" />
     <orderEntry type="library" exported="" name="volley-1.0.0" level="project" />
-    <orderEntry type="library" exported="" name="play-services-location-9.0.2" level="project" />
+    <orderEntry type="library" exported="" name="play-services-location-9.2.0" level="project" />
     <orderEntry type="library" exported="" name="logback-android-classic-1.1.1-4" level="project" />
   </component>
 </module>
