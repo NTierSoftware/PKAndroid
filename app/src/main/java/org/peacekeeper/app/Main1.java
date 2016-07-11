@@ -10,8 +10,8 @@ import android.widget.*;
 
 import org.json.*;
 import org.peacekeeper.crypto.SecurityGuard;
-import org.peacekeeper.rest.pkRequest;
-import org.peacekeeper.rest.pkRequest.pkURL;
+import org.peacekeeper.rest.LinkedRequest;
+import org.peacekeeper.rest.LinkedRequest.pkURL;
 import org.peacekeeper.util.pkUtility;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.pkcs.PKCS10CertificationRequest;
@@ -37,10 +37,8 @@ import static udinic.accounts_authenticator_example.authentication.AccountGenera
 public class Main1 extends Activity{
 //begin static
 static private final org.slf4j.Logger mLog = LoggerFactory.getLogger( Main1.class );
-static private final LoggerContext mLoggerContext = (LoggerContext) LoggerFactory
-		.getILoggerFactory();
-static private final ContextInitializer mContextInitializer = new ContextInitializer(
-		mLoggerContext );
+static private final LoggerContext mLoggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+static private final ContextInitializer mContextInitializer = new ContextInitializer( mLoggerContext );
 
 private static final String STATE_DIALOG = "state_dialog", STATE_INVALIDATE = "state_invalidate";
 private pkUtility mUtility;
@@ -123,21 +121,21 @@ private boolean mInvalidate;
 //chained HTTP requests for registration:
 // 1) POST registrations ->  2) PATCH registrations ->  3) GET devices
 
-	pkRequest ChainReg3 = new pkRequest(pkURL.devices, null )	{
+	LinkedRequest ChainReg3 = new LinkedRequest( pkURL.devices, null )	{
 		@Override public JSONObject getRequest( final JSONObject response ){
 			SecurityGuard.SetEntries( response );
 			return null; }
 	} ;
 
-	pkRequest ChainReg2 = new pkRequest(pkURL.registrations2, ChainReg3  ){
-		//pkRequest ChainReg2 = new pkRequest(pkURL.registrations2, null  ){
+	LinkedRequest ChainReg2 = new LinkedRequest( pkURL.registrations2, ChainReg3  ){
+		//LinkedRequest ChainReg2 = new LinkedRequest(pkURL.registrations2, null  ){
 		@Override public JSONObject getRequest( final JSONObject response ){
 			//mLog.debug("ChainReg2 header:\t" + this.mPkURL.mHeader.toString());
 			return getReceivedCode(); }
 	};
 
 
-	pkRequest ChainReg1 = new pkRequest(pkURL.registrations, getRegistration(), ChainReg2  ){
+	LinkedRequest ChainReg1 = new LinkedRequest( pkURL.registrations, getRegistration(), ChainReg2  ){
 		@Override public JSONObject getRequest( final JSONObject response ){ return null; }
 	};
 

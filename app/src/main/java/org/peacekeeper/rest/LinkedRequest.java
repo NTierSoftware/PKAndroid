@@ -1,7 +1,7 @@
-/*Code for chaining asynch volley requests. What's important is:
+/*Code for chaining asynch Volley requests. What's important is:
 		a) The call to nextRequest() in the mJsonResp listener.
 		nextRequest() ties each link in the chain together and is called by the listener.
-		b) The member mChainedRequest.
+		b) The member mLinkedRequest.
 		c) The abstract function needing override getRequest().
 http://stackoverflow.com/questions/33228364/need-to-send-multiple-volley-requests-in-a-sequence/38315244#38315244
 */
@@ -17,15 +17,13 @@ import com.android.volley.Response.ErrorListener;
 import com.android.volley.toolbox.JsonObjectRequest;
 
 import org.json.*;
-import org.peacekeeper.crypto.SecurityGuard;
-import org.peacekeeper.crypto.SecurityGuard.entryType;
 import org.peacekeeper.util.pkUtility;
 
 import java.net.*;
 import java.util.*;
 
 
-public abstract class pkRequest{
+public abstract class LinkedRequest{
 
 protected static org.slf4j.Logger mLog;
 protected final static pkUtility mUtility = pkUtility.getInstance();
@@ -56,17 +54,14 @@ private UUID msg_id = UUID.randomUUID();
 
 //each enum needs priority and method, url, request, response, errlsnr
 
-private JSONObject mResponse = null;
-
-
 protected final Response.Listener< JSONObject > mJsonResp =  new Response.Listener< JSONObject >(){
 	@Override public void onResponse( JSONObject response ){
 		String respStr = "response:\t" + ((response == null)? "NULL" : response.toString() );
 		mToast.setText( respStr );
 		mToast.show();
 		mLog.debug( "onResponse\t url:\t" + mPkURL.toString() + "\t:Response:\t" + respStr );
-		mResponse = response;
-		nextRequest();
+
+		nextRequest( response );
 	}
 };
 
@@ -102,9 +97,7 @@ public enum pkURL{
 	// http://stackoverflow.com/questions/28314160/error-in-volley-patch
 	// java.net.ProtocolException: Unknown method 'PATCH'; must be one of [OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE]
 	// http://stackoverflow.com/questions/19797842/patch-request-android-volley
-//	, registrations2( Method.POST, Priority.HIGH, pkRequest.registrations2Hdr, devices)
-	, registrations2( Method.POST, Priority.HIGH, pkRequest.registrations2Hdr)
-	//, registrations2(Method.PATCH, Priority.HIGH, devices)
+	, registrations2( Method.POST, Priority.HIGH, LinkedRequest.registrations2Hdr)
 	, registrations(Method.POST, Priority.NORMAL )
 	, status
 	;
@@ -114,18 +107,17 @@ public enum pkURL{
 	protected int mMethod;
 	public HashMap< String, String > mHeader;
 	protected String URLstr;
-	//public pkURL mNextURL = null;
 
 	pkURL(){
 		mMethod = Method.GET;
 		mPriority = Priority.LOW;
-		mHeader = pkRequest.mHeaders;
+		mHeader = LinkedRequest.mHeaders;
 	}
 
 	pkURL(int aMethod, Priority aPriority ){
 		mMethod = aMethod;
 		mPriority = aPriority;
-		mHeader = pkRequest.mHeaders;
+		mHeader = LinkedRequest.mHeaders;
 	}
 
 	pkURL(int aMethod,
@@ -142,23 +134,23 @@ public enum pkURL{
 public pkURL mPkURL;
 
 private JsonObjectRequest mJsonRequest = null;//The current request of this link. For future Request override getRequest().
-private pkRequest mChainedRequest = null;
+private LinkedRequest mLinkedRequest = null;
 //This constructor is only used for intermediate and last links in the chain.
-public pkRequest( @NonNull pkURL aPkURL, pkRequest aChainedRequest ){
+public LinkedRequest( @NonNull pkURL aPkURL, LinkedRequest aLinkedRequest ){
 	mLog = org.slf4j.LoggerFactory.getLogger( getClass() );
 	mPkURL = aPkURL;
 
-	if ( aChainedRequest != null ){
-		mChainedRequest = aChainedRequest;
-		mChainedRequest.msg_id = this.msg_id;
+	if ( aLinkedRequest != null ){
+		mLinkedRequest = aLinkedRequest;
+		mLinkedRequest.msg_id = this.msg_id;
 	}
 }//cstr
 
 
 
 //This constructor is  only used for the first link in the chain or singleton requests.
-public pkRequest( @NonNull final pkURL aPkURL, @NonNull JSONObject aRequestBody, pkRequest aChainedRequest ){
-	this( aPkURL, aChainedRequest );
+public LinkedRequest( @NonNull final pkURL aPkURL, @NonNull JSONObject aRequestBody, LinkedRequest aLinkedRequest ){
+	this( aPkURL, aLinkedRequest );
 
 	try{ aRequestBody.put( "_id", msg_id.toString() ); } catch ( Exception ignore ){}
 
@@ -185,7 +177,7 @@ private String toURL(){ //} throws JSONException{
 
 	case devices:
 		final String deviceID = "testdeviceId" //SecurityGuard.getEntry( entryType.deviceId )
-				, keeperID = "testkeeperId" //SecurityGuard.getEntry( entryType.keeperId )
+					, keeperID = "testkeeperId" //SecurityGuard.getEntry( entryType.keeperId )
 				;
 
 //GET http://192.168.1.156:80/devices/bbdef07b-9360-4d7b-8448-21c4daca4711?where=keeperId=="b0c486e5-13b1-4555-ba5f-d54bb1f0a6f7"
@@ -216,15 +208,9 @@ private String toURL(){ //} throws JSONException{
 	String toURL = toURL();
 
 	if (mJsonRequest == null) return "toString() NULL mJsonRequest:\t" + toURL;
-	String hdrs ="";
-/*
-	try{
-		hdrs = this.mJsonRequest.getHeaders().toString();
-	}
-	catch ( AuthFailureError aAuthFailureError ){
-		hdrs = "ERROR: getHeaders()";
-	}
-*/
+	String hdrs;
+	try{ hdrs = this.mJsonRequest.getHeaders().toString(); }
+	catch ( AuthFailureError aAuthFailureError ){ hdrs = "ERROR: getHeaders()"; }
 
 
 	return new StringBuilder( "\nmethod:\t:" + mJsonRequest.getMethod() )
@@ -240,33 +226,32 @@ private String toURL(){ //} throws JSONException{
 }//toString()
 
 
-//getRequest is used for the FUTURE request of mChainedRequest.
+//getRequest is used for the FUTURE request of mLinkedRequest.
 //for CURRENT request of this() use the constructor
-abstract public JSONObject getRequest( JSONObject response );
+abstract public JSONObject getRequest( final JSONObject response );
 
-private Request nextRequest(){//nextRequest() ties each link in the chain together and is called by the listener.
-//private Request nextRequest( JSONObject response ){
-	mLog.debug( "nextRequest:\t" + mResponse.toString() );
+private Request nextRequest(final JSONObject aResponse ){//nextRequest() ties each link in the chain together and is called by the listener.
+	mLog.debug( "nextRequest:\t" + aResponse.toString() );
 	Request retVal = null;
 // * * * * * * This is how and where the the "future" request must be called/constructed. * * * * * *
-	if ( mChainedRequest != null ){
-		final JSONObject requestBody = mChainedRequest.getRequest( mResponse );
+	if ( mLinkedRequest != null ){
+		final int mMethod = mLinkedRequest.mPkURL.mMethod;
+		final String aURL = mLinkedRequest.toURL();
 
-		final String aURL = mChainedRequest.toURL();
-		final Map<String, String> header = mChainedRequest.mPkURL.mHeader;
-		final int mMethod = mChainedRequest.mPkURL.mMethod;
-		this.mJsonRequest = 	new JsonObjectRequest( mMethod, aURL,
+		final JSONObject requestBody = mLinkedRequest.getRequest( aResponse );
+
+		final Priority priority = mLinkedRequest.mPkURL.mPriority;
+		final Map<String, String> header = mLinkedRequest.mPkURL.mHeader;
+
+		this.mJsonRequest = new JsonObjectRequest( mMethod, aURL,
 		                                              requestBody,
 		                                              mJsonResp, mErrLsnr ){
-
-			@Override public Priority getPriority() { return mPkURL.mPriority; }
-			@Override public Map<String, String> getHeaders() throws AuthFailureError{
-				return header;
-			}
+			@Override public Priority getPriority() { return priority; }
+			@Override public Map<String, String> getHeaders() throws AuthFailureError{ return header; }
 		};
 
 		mJsonRequest.setShouldCache( false );
-		this.mChainedRequest = mChainedRequest.mChainedRequest;
+		this.mLinkedRequest = mLinkedRequest.mLinkedRequest;
 		retVal =  submit();
 	}//if
 // * * * * * *  * * * * * * * * * * * *  * * * * * * * * * * * *  * * * * * * * * * * * * * * * * * *
@@ -278,11 +263,8 @@ return retVal;
 public Request submit(){
 	mLog.debug( "submit:\n" );
 	mLog.debug( this.toString() );
-	if (mChainedRequest!= null ) mLog.debug( "mChainedRequest:\t" + mChainedRequest.toString() );
-	//if (this.mPkURL == pkURL.registrations2 ) return null;
+	if ( mLinkedRequest != null ) mLog.debug( "mLinkedRequest:\t" + mLinkedRequest.toString() );
 	if ( mJsonRequest!= null ) return mRequestQueue.add( mJsonRequest );
 	return null;
 }//submit()
-
-
-}//class pkRequest
+}//class LinkedRequest
