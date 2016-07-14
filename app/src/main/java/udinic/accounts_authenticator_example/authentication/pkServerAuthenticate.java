@@ -1,13 +1,11 @@
 package udinic.accounts_authenticator_example.authentication;
 
-import org.peacekeeper.rest.Post;
-import org.peacekeeper.rest.Post.URLPost;
+import com.android.volley.Request;
+
 import org.peacekeeper.util.pkUtility;
 import org.slf4j.*;
 
 import java.io.Serializable;
-
-import com.android.volley.*;
 /*
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -35,7 +33,7 @@ private pkUtility mUtility = pkUtility.getInstance();
 	mLog.debug( "android.os.Build.SERIAL:\t" + android.os.Build.SERIAL ); */
 
 		//new Get( URLGet.status ).submit();
-	Request request = new Post( URLPost.registrations ).submit();
+	//Request request = new Post( URLPost.registrations ).submit();
 
 /*
 	String url = "https://api.parse.com/1/users";

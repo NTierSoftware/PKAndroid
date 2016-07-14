@@ -1,29 +1,20 @@
 package org.peacekeeper.app;
 
-import android.os.*;
-import android.support.v7.app.*;
-import android.support.v7.widget.*;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.*;
 
-import com.onesignal.*;
+import com.onesignal.OneSignal;
 
-import org.json.*;
-import org.peacekeeper.crypto.*;
-import org.peacekeeper.rest.Get;
-
-
-import org.peacekeeper.rest.Get.URLGet;
-import org.peacekeeper.rest.Post;
-
-
-import org.peacekeeper.rest.Post.URLPost;
-import org.peacekeeper.util.*;
-import org.slf4j.Logger;
+import org.json.JSONObject;
+import org.peacekeeper.crypto.SecurityGuard;
+import org.peacekeeper.util.pkUtility;
 import org.slf4j.*;
 
-import ch.qos.logback.classic.*;
-import ch.qos.logback.classic.util.*;
-import ch.qos.logback.core.joran.spi.*;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.util.ContextInitializer;
+import ch.qos.logback.core.joran.spi.JoranException;
 
 
 public class MainActivity extends AppCompatActivity{//implements AsyncResponse {
@@ -112,7 +103,7 @@ private pkUtility mUtility;
 	mLog.debug( "android.os.Build.SERIAL:\t" + android.os.Build.SERIAL ); */
 
 	//new Get( URLGet.status ).submit();
-	new Post( URLPost.registrations ).submit();
+	//new Post( URLPost.registrations ).submit();
 }//onStart()
 
 @Override protected void onStop(){

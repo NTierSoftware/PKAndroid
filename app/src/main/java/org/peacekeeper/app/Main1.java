@@ -123,7 +123,19 @@ private boolean mInvalidate;
 
 	LinkedRequest ChainReg3 = new LinkedRequest( pkURL.devices, null )	{
 		@Override public JSONObject getRequest( final JSONObject response ){
-			SecurityGuard.SetEntries( response );
+			try{
+				this.mPkURL.URLstr = new StringBuilder( "devices/" )
+						.append( response.getString("deviceId") )
+						.append( "?where=keeperId==\"" )
+						.append( response.getString("keeperId") + "\"" )
+						.toString();
+			}
+			catch ( JSONException X ){ X.printStackTrace();	}
+
+
+			String authtoken = SecurityGuard.getAuthToken( response );
+			this.mPkURL.mHeader.put( "Authorization", authtoken );
+
 			return null; }
 	} ;
 

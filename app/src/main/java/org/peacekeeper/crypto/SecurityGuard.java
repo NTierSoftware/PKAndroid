@@ -20,7 +20,7 @@ package org.peacekeeper.crypto;
 */
 
 
-import android.util.Base64;
+//import android.util.Base64;
 
 import org.json.*;
 import org.peacekeeper.exception.*;
@@ -42,6 +42,7 @@ import org.spongycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.spongycastle.pkcs.*;
 import org.spongycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 import org.spongycastle.util.io.pem.PemObject;
+import org.spongycastle.util.encoders.Base64;
 
 
 import java.io.*;
@@ -82,6 +83,8 @@ static private final ASN1ObjectIdentifier device = new ASN1ObjectIdentifier( "2.
 static private KeyPair mKEYPAIR = null;
 static private KeyStore mKEYSTORE = null;
 static private byte[] hash = null;
+static private final int nonceLen = 32;
+
 //end static
 private String message = null;
 
@@ -265,32 +268,6 @@ static public void SetEntries( final JSONObject response ){
 
 }//SetEntries
 
-/*
-static private void SetEntry( final String alias, String aValue ){
-// http://stackoverflow.com/questions/31254022/storing-secret-key-in-keystore-without-the-protectionparameter
-	mKEYSTORE = getKeyStore();
-
-	// generating a secret key
-	SecretKey secretKey = null;
-	//SecretKey secretKey = new SecretKeySpec( aValue.getBytes(), "AES");
-	try{
-		secretKey = KeyGenerator.getInstance("AES", PROVIDER.getName()).generateKey();
-	}
-	catch ( NoSuchAlgorithmException |NoSuchProviderException aE ){ aE.printStackTrace(); }
-
-// store the secret key
-	KeyStore.Entry keyStoreEntry = new KeyStore.SecretKeyEntry( secretKey );
-	ProtectionParameter keyPassword = new PasswordProtection( aValue.toCharArray() );
-
-	try{
-		mKEYSTORE.setEntry( alias, keyStoreEntry, keyPassword );
-	}catch ( KeyStoreException X ){
-		X.printStackTrace();
-		mLog.debug( X.getMessage() ); }
-
-}//SetEntry
-*/
-
 
 
 
@@ -357,33 +334,19 @@ public static void SetEntry(String alias, String aValue ) {
 	}
 	store();
 }
-/*
-static public String getEntry( entryType aEntryType ){
-	mLog.debug( "getEntry:\t" + aEntryType.name() );
-	String retVal;
-	try{
-		KeyStore.SecretKeyEntry secretKeyEntry = (SecretKeyEntry) mKEYSTORE.getEntry( aEntryType.name(), null );
-		retVal = new String( secretKeyEntry.getSecretKey().getEncoded() );
-	}catch ( NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException X ){
-		mLog.error( X.getMessage() );
-		retVal = "ERROR getEntry: " + aEntryType.name();
-	}
-	return retVal;
-}
-*/
 
 /*
 instructions for generating a PKC authentication-token:
 		- Generate a random 32-byte Nonce in a byte-array, using your platform's equivalent of linux' os.urandom( 32 ).
 		- Sign the Nonce with the user's PrivateKey, storing the signature in a byte-array.
 		- Concatenate the Nonce and the Signature into a single byte-array.
-		- Encode the byte-array as a base64 string - this bocomes our security-token.
-		- Combine the user's userId, deviceId, and security-token into a string with the following format:
+		- Encode the byte-array as a base64 string - this becomes our security-token.
+		- Combine the user's keeperId, deviceId, and security-token into a string with the following format:
 
-		"PEACEKEEPER-TOKEN userId,deviceId:security-token”
+		"PEACEKEEPER-TOKEN keeperId,deviceId:security-token”
 */
-public static String getAuthToken(){
-	StringBuilder secToken = new StringBuilder();
+public static String getAuthToken(final JSONObject response){
+	StringBuilder secToken = new StringBuilder("PEACEKEEPER-TOKEN ");
 	try{
 		byte[] nonce = genNonce();
 
@@ -392,23 +355,24 @@ public static String getAuthToken(){
 		signature.initSign( getKeyPair().getPrivate() );
 		signature.update( nonce );
 
-		byte[] sign = signature.sign(), securityToken = new byte[ nonce.length + sign.length ];
-		System.arraycopy( nonce, 0, securityToken, 0, nonce.length );
-		System.arraycopy( sign, 0, securityToken, nonce.length, sign.length );
+		byte[] sign = signature.sign()
+			   , securityToken = new byte[ nonceLen + sign.length ];
 
-		secToken.append( "PEACEKEEPER-TOKEN " )
-		        .append( getEntry( entryType.keeperId ) )
-		        .append( "," )
-		        .append( getEntry( entryType.deviceId ) )
-		        .append( ":" )
-		        .append( Base64.encodeToString( securityToken, Base64.DEFAULT ) );
+		System.arraycopy( nonce, 0, securityToken, 0, nonceLen );
+		System.arraycopy( sign, 0, securityToken, nonceLen, sign.length );
 
-	}catch ( SignatureException | NoSuchAlgorithmException | InvalidKeyException X ){
-		mLog.error( X.getMessage() );
+		secToken
+	        .append( response.getString("keeperId") + "," )
+	        .append( response.getString("deviceId") + ":" )
+	        //.append( Base64.encodeToString( securityToken, Base64.DEFAULT ) )
+			.append( Base64.toBase64String( securityToken ) );
+
 	}
+	catch ( SignatureException | NoSuchAlgorithmException | InvalidKeyException| JSONException X )
+	{mLog.error( X.getMessage() );}
 
-	return secToken.toString();
-}//getAuthToken
+return secToken.toString();
+} //getAuthToken()
 
 
 
@@ -602,9 +566,9 @@ static private void genKeyPair(){
 	mKEYPAIR = kpg.generateKeyPair();
 }//genKeyPair
 
+
 static private byte[] genNonce(){
 // http://stackoverflow.com/questions/5683206/how-to-create-an-array-of-20-random-bytes
-	final int nonceLen = 32;
 	byte[] nonce = new byte[ nonceLen ];
 	new SecureRandom().nextBytes( nonce );
 	return nonce;
@@ -638,39 +602,6 @@ static private void store(){
 
 }//store
 
-/* Definition of Registration:
-KeyStore contains valid certificate
- */
-/*
-static private boolean isRegistered(){//TODO isRegistered
-	boolean isRegistered = false;
-
-	if ( mKEYSTORE == null ){
-		if ( keyStoreFileExists() ){
-		}
-	}
-	return isRegistered;
-}//isRegistered
-*/
-
-/*
-public boolean verify(){
-	boolean verify;
-	try{
-		Signature ecdsaVerify = Signature.getInstance( SHA256withECDSA );
-		ecdsaVerify.initVerify( getKeyPair().getPublic() );
-		ecdsaVerify.update( this.message.getBytes( charset ) );
-		verify = ecdsaVerify.verify( getSignature() );
-
-	}catch ( NoSuchAlgorithmException | InvalidKeyException | SignatureException | UnsupportedEncodingException X ){
-		verify = false;
-		pkException CRYPTOERR = new pkException( pkErrCode.CRYPTO ).set( "crypto verify err", X );
-		mLog.error( CRYPTOERR.toString() );
-	}
-
-	return verify;
-}//verify
-*/
 
 static private boolean unRegister(){//purges mKEYSTORE
 	mLog.debug( "unRegister()" );
@@ -922,3 +853,76 @@ KeyStore.SecretKeyEntry skEntry =
 ks.setEntry("secretKeyAlias", skEntry, password);
 
 */
+/* Definition of Registration:
+KeyStore contains valid certificate
+ */
+/*
+static private boolean isRegistered(){//TODO isRegistered
+	boolean isRegistered = false;
+
+	if ( mKEYSTORE == null ){
+		if ( keyStoreFileExists() ){
+		}
+	}
+	return isRegistered;
+}//isRegistered
+*/
+
+/*
+public boolean verify(){
+	boolean verify;
+	try{
+		Signature ecdsaVerify = Signature.getInstance( SHA256withECDSA );
+		ecdsaVerify.initVerify( getKeyPair().getPublic() );
+		ecdsaVerify.update( this.message.getBytes( charset ) );
+		verify = ecdsaVerify.verify( getSignature() );
+
+	}catch ( NoSuchAlgorithmException | InvalidKeyException | SignatureException | UnsupportedEncodingException X ){
+		verify = false;
+		pkException CRYPTOERR = new pkException( pkErrCode.CRYPTO ).set( "crypto verify err", X );
+		mLog.error( CRYPTOERR.toString() );
+	}
+
+	return verify;
+}//verify
+*/
+/*
+static public String getEntry( entryType aEntryType ){
+	mLog.debug( "getEntry:\t" + aEntryType.name() );
+	String retVal;
+	try{
+		KeyStore.SecretKeyEntry secretKeyEntry = (SecretKeyEntry) mKEYSTORE.getEntry( aEntryType.name(), null );
+		retVal = new String( secretKeyEntry.getSecretKey().getEncoded() );
+	}catch ( NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException X ){
+		mLog.error( X.getMessage() );
+		retVal = "ERROR getEntry: " + aEntryType.name();
+	}
+	return retVal;
+}
+*/
+/*
+static private void SetEntry( final String alias, String aValue ){
+// http://stackoverflow.com/questions/31254022/storing-secret-key-in-keystore-without-the-protectionparameter
+	mKEYSTORE = getKeyStore();
+
+	// generating a secret key
+	SecretKey secretKey = null;
+	//SecretKey secretKey = new SecretKeySpec( aValue.getBytes(), "AES");
+	try{
+		secretKey = KeyGenerator.getInstance("AES", PROVIDER.getName()).generateKey();
+	}
+	catch ( NoSuchAlgorithmException |NoSuchProviderException aE ){ aE.printStackTrace(); }
+
+// store the secret key
+	KeyStore.Entry keyStoreEntry = new KeyStore.SecretKeyEntry( secretKey );
+	ProtectionParameter keyPassword = new PasswordProtection( aValue.toCharArray() );
+
+	try{
+		mKEYSTORE.setEntry( alias, keyStoreEntry, keyPassword );
+	}catch ( KeyStoreException X ){
+		X.printStackTrace();
+		mLog.debug( X.getMessage() ); }
+
+}//SetEntry
+*/
+
