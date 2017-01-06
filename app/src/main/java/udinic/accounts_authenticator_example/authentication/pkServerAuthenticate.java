@@ -1,41 +1,166 @@
 package udinic.accounts_authenticator_example.authentication;
 
-import com.android.volley.Request;
+import android.accounts.AccountManager;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
 
+import com.android.volley.Response;
+
+import org.json.*;
+import org.peacekeeper.crypto.SecurityGuard;
+import org.peacekeeper.rest.LinkedRequest;
+import org.peacekeeper.rest.LinkedRequest.pkURL;
 import org.peacekeeper.util.pkUtility;
 import org.slf4j.*;
+import org.spongycastle.pkcs.PKCS10CertificationRequest;
+import org.spongycastle.util.encoders.Base64;
 
-import java.io.Serializable;
-/*
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-*/
+import java.io.IOException;
 
-/**
- Handles the comminication with Parse.com
 
- User: udinic
- Date: 3/27/13
- Time: 3:30 AM
- */
+import static udinic.accounts_authenticator_example.authentication.AuthenticatorActivity.KEY_ERROR_MESSAGE;
+import static udinic.accounts_authenticator_example.authentication.AuthenticatorActivity.PARAM_USER_PASS;
+
+
 public class pkServerAuthenticate implements ServerAuthenticate{
-private static final Logger mLog	= LoggerFactory.getLogger( pkServerAuthenticate.class );
-
-public static final String authtoken = "pkServerAuthenticate";
-
+private static final Logger mLog = LoggerFactory.getLogger( pkServerAuthenticate.class );
+//public static final String authtoken;// = "pkServerAuthenticate";
+private static String authtoken;// = "pkServerAuthenticate";
 private pkUtility mUtility = pkUtility.getInstance();
 
-@Override public String userSignUp( String name, String email, String pass, String authType )throws Exception{
-		mLog.trace( "userSignUp():\t" );
+@Override public String userSignUp( final String name, final String email, final String zipCode,
+                          final String authType ) throws Exception{
+return userSignUp( null, name, email, zipCode, authType );
+}
 
-/* mLog.debug( "serialno:\t" + pkUtility.getSystemProperty( "ro.serialno" ) );
-	mLog.debug( "android.os.Build.SERIAL:\t" + android.os.Build.SERIAL ); */
+//public String userSignUp( final String name, final String email, final String pass, final String authType )throws Exception{
+public String userSignUp( final Activity aActivity, final String accountName, final String email, final String zipCode,
+                          final String authType ) throws Exception{
 
-		//new Get( URLGet.status ).submit();
-	//Request request = new Post( URLPost.registrations ).submit();
+	mLog.trace( "userSignUp():\t" );
+	LinkedRequest ChainReg3 = new LinkedRequest( pkURL.devices, null ){
+		@Override public JSONObject getRequest( final JSONObject response ){
+			try{
+				this.mPkURL.URLstr = new StringBuilder( "devices/" )
+						.append( response.getString( "deviceId" ) )
+						.append( "?where=keeperId==\"" )
+						.append( response.getString( "keeperId" ) + "\"" )
+						.toString();
+			}catch ( JSONException X ){ X.printStackTrace(); }
+
+			authtoken = SecurityGuard.getAuthToken( response );
+//			authtoken = SecurityGuard.SETAuthToken( response ); SET AUTH TOKEN HERE
+			this.mPkURL.mHeader.put( "Authorization", authtoken );
+
+		return null;
+		}//getRequest
+	};
+
+	Response.Listener< JSONObject > aJsonResp =  new Response.Listener< JSONObject >(){
+		@Override public void onResponse( JSONObject response ){
+			mLog.error( "\n\n\t\t!!!!onResponse from ChainReg3!!!!!!\n\n" );
+			String respStr = "response:\t" + ((response == null)? "NULL" : response.toString() );
+
+			if (aActivity != null){
+				Bundle data = new Bundle();
+				try{
+					data.putString(AccountManager.KEY_ACCOUNT_NAME, accountName);
+					data.putString( AccountManager.KEY_AUTHTOKEN, authtoken );
+					data.putString( AccountManager.KEY_USERDATA, email );
+					data.putString( AccountManager.KEY_ACCOUNT_TYPE, authType );
+//				data.putString( PARAM_USER_PASS, accountPassword ); //TODO pw is not zip FIX
+					data.putString( PARAM_USER_PASS, zipCode );//TODO pw is not zip FIX
+				}catch ( Exception e ){ data.putString( KEY_ERROR_MESSAGE, e.getMessage() ); }
+
+				Intent retVal = new Intent().putExtras( data );
+
+				aActivity.setResult( Activity.RESULT_OK, retVal );
+				aActivity.finish();
+
+			}//if
+		}
+	};
+
+	ChainReg3.setResponseListener( aJsonResp );
+
+	LinkedRequest ChainReg2 = new LinkedRequest( pkURL.registrations2, ChainReg3 ){
+		@Override public JSONObject getRequest( final JSONObject response ){
+			return getReceivedCode();
+		}
+	};
+
+
+	LinkedRequest ChainReg1 = new LinkedRequest( pkURL.registrations
+												, getRegistration(),
+	                                             ChainReg2 ){
+		@Override public JSONObject getRequest( final JSONObject response ){ return null; }
+	};
+
+	ChainReg1.submit();
+
+return authtoken;
+}//userSignUp
+
+
+
+@Override
+public String userSignIn( final String user, final String pass, final String authType )
+throws Exception{
+//public String userSignUp( final String name, final String email, final String pass, final String authType )throws Exception{
+	return authtoken;
+}//userSignIn()
+
+
+private JSONObject getRegistration(){
+	PKCS10CertificationRequest CSR = SecurityGuard.genCSR();
+	mLog.debug( SecurityGuard.toPEM( CSR ) );
+
+	JSONObject registration = new JSONObject();
+	try{
+		//boolean accepted = false;
+		//String CSRstr = Base64.toBase64String( CSR.getEncoded() );
+
+		registration.put( "accepted", false )
+		            .put( "csr", Base64.toBase64String( CSR.getEncoded() ) )
+		            .put( "deviceId", mUtility.getUniqDeviceID().toString() )
+		            .put( "deviceOSType", "Android" )
+		            .put( "deviceOSVersion", mUtility.getVersion().toString() )
+		            .put( "keeperId", "" )
+		            .put( "receivedCode", "" )
+		            .put( "referredBy", "JDtest@boosh.com" );
+
+	}catch ( IOException | JSONException X ){
+		mLog.error( X.getMessage() );
+		registration = pkUtility.errJSONObject;
+	}
+
+	mLog.debug( "\nPOST :\t" + registration.toString() );
+return registration;
+}//getRegistration
+
+
+private JSONObject getReceivedCode(){
+	JSONObject ReceivedCode = new JSONObject();
+	try{
+		ReceivedCode.put( "receivedCode", "12345678" );
+	}catch ( JSONException X ){
+		mLog.error( X.getMessage() );
+		ReceivedCode = pkUtility.errJSONObject;
+	}
+
+	mLog.debug( "\nReceivedCode PATCH :\t" + ReceivedCode.toString() );
+return ReceivedCode;
+}//getReceivedCode
+
+}//class pkServerAuthenticate
+
+
 
 /*
+public String userSignUp( final String name, final String email, final String zipCode, final String authType )throws Exception{
+	mLog.trace( "userSignUp():\t" );
+
 	String url = "https://api.parse.com/1/users";
 
 	DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -63,12 +188,12 @@ private pkUtility mUtility = pkUtility.getInstance();
 
 		authtoken = createdUser.sessionToken;
 	}catch ( IOException e ){ mLog.error( e.getMessage() ); }
-*/
 
-return authtoken;
+	return authtoken;
 }//userSignUp
 
-@Override public String userSignIn( String user, String pass, String authType ) throws Exception{
+public String userSignIn( final String user, final String pass, final String authType )throws Exception{
+//public String userSignUp( final String name, final String email, final String pass, final String authType )throws Exception{
 
 /*
 	mLog.debug( "userSignIn" );
@@ -109,49 +234,9 @@ return authtoken;
 		authtoken = loggedUser.sessionToken;
 
 	}catch ( IOException e ){ mLog.error( e.getMessage() );}
-*/
 
 return authtoken;
 }//userSignIn()
 
 
-private class ParseComError implements Serializable{ int code; String error; }
-
-private class User implements Serializable{
-	public String sessionToken;
-
-	private String firstName
-			, lastName
-			, username
-			, phone
-			, objectId
-			, gravatarId
-			, avatarUrl;
-
-
-	public String getFirstName(){ return firstName; }
-	public void setFirstName( String firstName ){ this.firstName = firstName; }
-
-	public String getLastName(){ return lastName; }
-	public void setLastName( String lastName ){ this.lastName = lastName; }
-
-	public String getUsername(){ return username; }
-	public void setUsername( String username ){ this.username = username; }
-
-	public String getPhone(){ return phone; }
-	public void setPhone( String phone ){ this.phone = phone; }
-
-	public String getObjectId(){ return objectId; }
-	public void setObjectId( String objectId ){ this.objectId = objectId; }
-
-	public String getSessionToken(){ return sessionToken; }
-	public void setSessionToken( String sessionToken ){ this.sessionToken = sessionToken; }
-
-	public String getGravatarId(){ return gravatarId; }
-	public void setGravatarId( String gravatarId ){ this.gravatarId = gravatarId; }
-
-	public String getAvatarUrl(){ return avatarUrl; }
-	public void setAvatarUrl( String avatarUrl ){ this.avatarUrl = avatarUrl; }
-}//class User
-}//class ParseComServerAuthenticate
-
+*/

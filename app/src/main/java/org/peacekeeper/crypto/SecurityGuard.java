@@ -20,7 +20,6 @@ package org.peacekeeper.crypto;
 */
 
 
-//import android.util.Base64;
 
 import org.json.*;
 import org.peacekeeper.exception.*;
@@ -43,6 +42,7 @@ import org.spongycastle.pkcs.*;
 import org.spongycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 import org.spongycastle.util.io.pem.PemObject;
 import org.spongycastle.util.encoders.Base64;
+//import android.util.Base64;
 
 
 import java.io.*;
@@ -69,30 +69,28 @@ static private final char[] keyStorePW = "PeaceKeeperKeyStorePW".toCharArray();
 static private final String ECDSA = "ECDSA"
 							, SHA256withECDSA = "SHA256withECDSA"
 							, NamedCurve = "P-256" //"secp256r1"
-							, Alias = "PK." //=PeaceKeeper
+							, Alias = "PK." //=PeaceKeeper.
 							, pubKeyAlias = Alias + "pub"
 							, priKeyAlias = Alias + "pri"
 							, certKeyAlias = Alias + "Cert"
-//		, keyStoreType = "pkcs12"
-		, keyStoreType = "BKS"
-//		, keyStoreType = "JCEKS"
+							, keyStoreType = "BKS" //"pkcs12" "JCEKS"
 							, keyStoreFilename = Alias + keyStoreType
 							, emailAddr = "ntiersoftwareengineering@gmail.com";
 //http://stackoverflow.com/questions/16412315/creating-custom-x509-v3-extensions-in-java-with-bouncy-castle
 static private final ASN1ObjectIdentifier device = new ASN1ObjectIdentifier( "2.5.6.14" );
 static private KeyPair mKEYPAIR = null;
 static private KeyStore mKEYSTORE = null;
-static private byte[] hash = null;
+//static private byte[] hash = null;
 static private final int nonceLen = 32;
 
 //end static
-private String message = null;
+//private String message = null;
 
 public enum entryType{deviceId, keeperId}
 
 public SecurityGuard( final String aMessage ){
 	initSecurity();
-	this.message = aMessage;
+	//this.message = aMessage;
 }
 
 static public void initSecurity(){ initSecurity( PROVIDER ); }
@@ -248,7 +246,7 @@ return new Extension( Extension.subjectAlternativeName, true, UniqID);
 }//UniqID
 */
 
-
+/*
 static public void SetEntries( final JSONObject response ){
 	try{
 		String alias = entryType.deviceId.name();
@@ -267,9 +265,6 @@ static public void SetEntries( final JSONObject response ){
 	return;
 
 }//SetEntries
-
-
-
 
 static private ProtectionParameter mKSProtParam = new PasswordProtection( keyStorePW );
 
@@ -307,7 +302,6 @@ static public String getEntry( entryType aEntryType ){
 return retVal;
 }//getEntry()
 
-
 public static void SetEntry(String alias, String aValue ) {
 	mKEYSTORE = getKeyStore();
 
@@ -334,6 +328,7 @@ public static void SetEntry(String alias, String aValue ) {
 	}
 	store();
 }
+*/
 
 /*
 instructions for generating a PKC authentication-token:
@@ -364,7 +359,6 @@ public static String getAuthToken(final JSONObject response){
 		secToken
 	        .append( response.getString("keeperId") + "," )
 	        .append( response.getString("deviceId") + ":" )
-	        //.append( Base64.encodeToString( securityToken, Base64.DEFAULT ) )
 			.append( Base64.toBase64String( securityToken ) );
 
 	}
@@ -373,11 +367,6 @@ public static String getAuthToken(final JSONObject response){
 
 return secToken.toString();
 } //getAuthToken()
-
-
-
-
-
 
 static private KeyPair getKeyPair(){
 	mLog.debug( "mKEYPAIR " + ( mKEYPAIR == null ? "" : "NOT " ) + "null" );
@@ -495,7 +484,7 @@ static private X509Certificate genRootCertificate( KeyPair kp ){
 		throw CRYPTOERR;
 	}
 
-	return certificate;
+return certificate;
 }//genRootCertificate()
 
 static private void genKeyStore(){
@@ -571,7 +560,7 @@ static private byte[] genNonce(){
 // http://stackoverflow.com/questions/5683206/how-to-create-an-array-of-20-random-bytes
 	byte[] nonce = new byte[ nonceLen ];
 	new SecureRandom().nextBytes( nonce );
-	return nonce;
+return nonce;
 }
 
 //https://github.com/boeboe/be.boeboe.spongycastle/commit/5942e4794c6f950a95409f2612fad7de7cc49b33
@@ -598,8 +587,6 @@ static private void store(){
 		mLog.error( CRYPTOERR.toString() );
 		throw CRYPTOERR;
 	}
-
-
 }//store
 
 
@@ -630,7 +617,7 @@ static private boolean unRegister(){//purges mKEYSTORE
 	}
 	mLog.debug( "keystore after purge:\n" );
 	listKeyStore();
-	return unRegister;
+return unRegister;
 }//unRegister()
 
 /*
@@ -656,6 +643,7 @@ private byte[] getSignature(){
 }//getSignature
 */
 
+/*
 //http://stackoverflow.com/questions/415953/how-can-i-generate-an-md5-hash/23273249#23273249
 @Override
 public String toString(){
@@ -673,6 +661,8 @@ public String toString(){
 
 	return retVal.toString();
 }
+*/
+
 }//class SecurityGuard
 
 /*
@@ -886,43 +876,3 @@ public boolean verify(){
 	return verify;
 }//verify
 */
-/*
-static public String getEntry( entryType aEntryType ){
-	mLog.debug( "getEntry:\t" + aEntryType.name() );
-	String retVal;
-	try{
-		KeyStore.SecretKeyEntry secretKeyEntry = (SecretKeyEntry) mKEYSTORE.getEntry( aEntryType.name(), null );
-		retVal = new String( secretKeyEntry.getSecretKey().getEncoded() );
-	}catch ( NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException X ){
-		mLog.error( X.getMessage() );
-		retVal = "ERROR getEntry: " + aEntryType.name();
-	}
-	return retVal;
-}
-*/
-/*
-static private void SetEntry( final String alias, String aValue ){
-// http://stackoverflow.com/questions/31254022/storing-secret-key-in-keystore-without-the-protectionparameter
-	mKEYSTORE = getKeyStore();
-
-	// generating a secret key
-	SecretKey secretKey = null;
-	//SecretKey secretKey = new SecretKeySpec( aValue.getBytes(), "AES");
-	try{
-		secretKey = KeyGenerator.getInstance("AES", PROVIDER.getName()).generateKey();
-	}
-	catch ( NoSuchAlgorithmException |NoSuchProviderException aE ){ aE.printStackTrace(); }
-
-// store the secret key
-	KeyStore.Entry keyStoreEntry = new KeyStore.SecretKeyEntry( secretKey );
-	ProtectionParameter keyPassword = new PasswordProtection( aValue.toCharArray() );
-
-	try{
-		mKEYSTORE.setEntry( alias, keyStoreEntry, keyPassword );
-	}catch ( KeyStoreException X ){
-		X.printStackTrace();
-		mLog.debug( X.getMessage() ); }
-
-}//SetEntry
-*/
-

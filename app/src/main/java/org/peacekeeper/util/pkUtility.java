@@ -4,8 +4,10 @@ package org.peacekeeper.util;
 	mUtility = pkUtility.getInstance(this);
 */
 
+import android.app.AlertDialog;
 import android.content.*;
 import android.content.res.*;
+import android.location.LocationManager;
 import android.net.*;
 import android.os.*;
 import android.preference.PreferenceManager;
@@ -247,7 +249,7 @@ public Resources getResources(){ return mContext.getResources();}
 
 
 
-public static enum TestResult{ OK, DBdown, Webdown, Netdown, GPSdown, MismatchedDeployment; }
+public enum TestResult{ OK, DBdown, Webdown, Netdown, GPSdown, MismatchedDeployment; }
 public TestResult Test(){ return TestResult.Netdown; }
 
 

@@ -1,61 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="org.peacekeeper.app" xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest package="org.peacekeeper.app"
+          xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-<!--    http://developer.samsung.com/technical-doc/view.do?v=T000000103-->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <!-- http://developer.samsung.com/technical-doc/view.do?v=T000000103 -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
-    <!--    required by AccountManager#addAccount() -->
+    <!-- required by AccountManager#addAccount() -->
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS"/>
-
     <uses-permission android:name="android.permission.USE_CREDENTIALS"/>
     <!-- Authenticator -->
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
-    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.INTERNET"/>
 
-    <!-- http://stackoverflow.com/questions/15718869/how-to-lock-android-apps-orientation-to-portrait-mode-->
-    <uses-feature android:name="android.hardware.screen.portrait" android:required="true" />
+    <!-- http://stackoverflow.com/questions/15718869/how-to-lock-android-apps-orientation-to-portrait-mode -->
+    <uses-feature
+        android:name="android.hardware.screen.portrait"
+        android:required="true"/>
 
-    <!--        <activity
+    <uses-permission android:name="android.permission.READ_PROFILE"/>
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+
+    <!--
+        <activity
             android:name=".MainActivity"
                         android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar"
--->
-
+    -->
     <application
         android:name=".pkApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/iclaunch_peacekeeper"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        android:name="android.support.multidex.MultiDexApplication">
+<!--
         <activity
             android:name=".Main1"
             android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+-->
 
+        <activity android:name=".actRegistration">
+            android:label="@string/registration"
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
-        <!-- Authenticator related activities and service needs to be declared here in order for the app to recognize them-->
-        <activity android:name="udinic.accounts_authenticator_example.authentication.AuthenticatorActivity" android:label="@string/login_label"/>
-        <activity android:name="udinic.accounts_authenticator_example.authentication.SignUpActivity" android:label="@string/signup_title"/>
 
+
+        <!-- Authenticator related activities and service needs to be declared here in order for the app to recognize them -->
+        <activity
+            android:name="udinic.accounts_authenticator_example.authentication.AuthenticatorActivity"
+            android:label="@string/login_label"/>
+        <activity
+            android:name="udinic.accounts_authenticator_example.authentication.SignUpActivity"
+            android:label="@string/signup_title"/>
 
         <service android:name="udinic.accounts_authenticator_example.authentication.UdinicAuthenticatorService">
-            <intent-filter><action android:name="android.accounts.AccountAuthenticator" /> </intent-filter>
-            <meta-data android:name="android.accounts.AccountAuthenticator" android:resource="@xml/authenticator" />
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/authenticator"/>
         </service>
 
+        <activity android:name=".Registration1">
+        </activity>
+
+        <!-- Service to asynchronously fetch a location address using a Geocoder. Setting the
+android:exported attribute to "false" stops other apps from starting this
+service, even when using an explicit intent. -->
+        <service
+            android:name="org.peacekeeper.service.FetchAddressIntentService"
+            android:exported="false"/>
+
     </application>
-</manifest>
 
-
-
-
-    <!--
+</manifest><!--
             <service android:name="udinic.accounts_authenticator_example.authentication.UdinicAuthenticatorService"
                  android:exported="false"
                  android:process=":auth">
@@ -80,4 +112,4 @@
                 android:name="android.accounts.AccountAuthenticator"
                 android:resource="@xml/authenticator" />
         </service>
-    -->
+-->

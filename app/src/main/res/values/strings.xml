@@ -3,8 +3,6 @@
 
     <!-- THERE MUST ONLY BE 1 (ONE) ACCOUNT OF TYPE accountType!
 see files
-	Contract.java
-	Connection.properties
 	res/values/strings.xml,
 	res/xml/authenticator.xml, and
 	res/xml/syncadapter.xml
@@ -12,10 +10,10 @@ see files
 -->
 
     <string name="accountType">peacekeeper.authenticator.com</string>
-    <string name="accountType2">com.udinic.auth_example</string>
+    <!--    <string name="accountType2">com.udinic.auth_example</string>-->
     <string name="AuthSvcDesc">Authorizes PeaceKeeper</string>
 
-<!--
+    <!--
     <string name="crash_toast_text">PeaceKeeper is sending status now.</string>
 
     <string name="action_finish">Exit</string>
@@ -35,5 +33,35 @@ see files
 
     <string name="signup_title">Create new account</string>
     <string name="login_label">Log in</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_name">Name:</string>
+    <string name="prompt_email">Email:</string>
+    <string name="prompt_password">Password:</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_next">Next</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="error_invalid_email">This email address is invalid</string>
+    <string name="error_invalid_password">This password is too short</string>
+    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_field_required">This field is required</string>
+    <string name="permission_rationale">"Contacts permissions are needed for providing email
+        completions."
+    </string>
+
+    <string name="Registration">Registration</string>
+
+<!--Geocode constants-->
+    <string name="NoLocationPermission">Location Permission required</string>
+    <string name="no_geocoder_available">No geocoder available</string>
+
+    <string name="fetch_address">Fetch address</string>
+
+    <string name="address_found">Address found</string>
+
+    <string name="no_address_found">Sorry, no address found</string>
+    <string name="no_location_data_provided">No location data provided</string>
+    <string name="service_not_available">Sorry, the service is not available</string>
+    <string name="invalid_lat_long_used">Invalid latitude or longitude used</string>
 
 </resources>

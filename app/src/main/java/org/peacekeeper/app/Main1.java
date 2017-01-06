@@ -1,9 +1,12 @@
 package org.peacekeeper.app;
 
+import android.Manifest.permission;
 import android.accounts.*;
 import android.app.*;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.*;
@@ -37,8 +40,10 @@ import static udinic.accounts_authenticator_example.authentication.AccountGenera
 public class Main1 extends Activity{
 //begin static
 static private final org.slf4j.Logger mLog = LoggerFactory.getLogger( Main1.class );
-static private final LoggerContext mLoggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-static private final ContextInitializer mContextInitializer = new ContextInitializer( mLoggerContext );
+static private final LoggerContext mLoggerContext = (LoggerContext) LoggerFactory
+		.getILoggerFactory();
+static private final ContextInitializer mContextInitializer = new ContextInitializer(
+		mLoggerContext );
 
 private static final String STATE_DIALOG = "state_dialog", STATE_INVALIDATE = "state_invalidate";
 private pkUtility mUtility;
@@ -50,12 +55,6 @@ private AccountManager mAccountManager;
 private AlertDialog mAlertDialog;
 private boolean mInvalidate;
 
-@Override public void onDestroy(){
-	super.onDestroy();
-	mLog.trace( "onDestroy():\t" );
-	mLoggerContext.stop();//flush log
-}
-
 @Override protected void onCreate( Bundle savedInstanceState ){
 	super.onCreate( savedInstanceState );
 	SecurityGuard.initSecurity();
@@ -64,7 +63,8 @@ private boolean mInvalidate;
 	setContentView( R.layout.main );
 	mAccountManager = AccountManager.get( this );
 
-	accountType = getString(R.string.accountType);
+	accountType = getString( R.string.accountType );
+	//accountType = getString(R.string.accountType2);
 
 	findViewById( R.id.btnAddAccount ).setOnClickListener( new View.OnClickListener(){
 		@Override public void onClick( View v ){
@@ -99,17 +99,6 @@ private boolean mInvalidate;
 
 }//onCreate
 
-@Override protected void onRestart(){
-	super.onRestart();
-	// Reload Logback log: http://stackoverflow.com/questions/3803184/setting-logback-appender-path-programmatically/3810936#3810936
-	mLoggerContext.reset();
-
-	try{
-		mContextInitializer.autoConfig();
-	} //I prefer autoConfig() over JoranConfigurator.doConfigure() so I don't need to find the file myself.
-	catch ( JoranException X ){ X.printStackTrace(); }
-}//onRestart()
-
 @Override protected void onStart(){
 	mLog.trace( "onStart():\t" );
 	super.onStart();
@@ -121,33 +110,35 @@ private boolean mInvalidate;
 //chained HTTP requests for registration:
 // 1) POST registrations ->  2) PATCH registrations ->  3) GET devices
 
-	LinkedRequest ChainReg3 = new LinkedRequest( pkURL.devices, null )	{
+	LinkedRequest ChainReg3 = new LinkedRequest( pkURL.devices, null ){
 		@Override public JSONObject getRequest( final JSONObject response ){
 			try{
 				this.mPkURL.URLstr = new StringBuilder( "devices/" )
-						.append( response.getString("deviceId") )
+						.append( response.getString( "deviceId" ) )
 						.append( "?where=keeperId==\"" )
-						.append( response.getString("keeperId") + "\"" )
+						.append( response.getString( "keeperId" ) + "\"" )
 						.toString();
-			}
-			catch ( JSONException X ){ X.printStackTrace();	}
+			}catch ( JSONException X ){ X.printStackTrace(); }
 
 
 			String authtoken = SecurityGuard.getAuthToken( response );
 			this.mPkURL.mHeader.put( "Authorization", authtoken );
 
-			return null; }
-	} ;
+			return null;
+		}
+	};
 
-	LinkedRequest ChainReg2 = new LinkedRequest( pkURL.registrations2, ChainReg3  ){
+	LinkedRequest ChainReg2 = new LinkedRequest( pkURL.registrations2, ChainReg3 ){
 		//LinkedRequest ChainReg2 = new LinkedRequest(pkURL.registrations2, null  ){
 		@Override public JSONObject getRequest( final JSONObject response ){
 			//mLog.debug("ChainReg2 header:\t" + this.mPkURL.mHeader.toString());
-			return getReceivedCode(); }
+			return getReceivedCode();
+		}
 	};
 
 
-	LinkedRequest ChainReg1 = new LinkedRequest( pkURL.registrations, getRegistration(), ChainReg2  ){
+	LinkedRequest ChainReg1 = new LinkedRequest( pkURL.registrations, getRegistration(),
+	                                             ChainReg2 ){
 		@Override public JSONObject getRequest( final JSONObject response ){ return null; }
 	};
 
@@ -198,7 +189,6 @@ private JSONObject getReceivedCode(){
 }//getReceivedCode
 
 
-
 @Override protected void onStop(){
 	mLog.trace( "onStop():\t" );
 
@@ -231,7 +221,7 @@ private void addNewAccount( String accountType, String authTokenType ){
 				mLog.debug( "udinic", "AddNewAccount Bundle is " + bnd );
 			}catch ( Exception e ){
 				mLog.error( e.getMessage() );
-				e.printStackTrace();
+				//e.printStackTrace();
 				showMessage( e.getMessage() );
 			}
 		}//run
@@ -250,16 +240,23 @@ private void addNewAccount( String accountType, String authTokenType ){
  */
 private void showAccountPicker( final String authTokenType, final boolean invalidate ){
 	mInvalidate = invalidate;
+	if ( ActivityCompat.checkSelfPermission( this,
+	                                         permission.GET_ACCOUNTS ) != PackageManager.PERMISSION_GRANTED ){
+		// TODO: Consider calling
+		//    ActivityCompat#requestPermissions
+		// here to request the missing permissions, and then overriding
+		//   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+		//                                          int[] grantResults)
+		// to handle the case where the user grants the permission. See the documentation
+		// for ActivityCompat#requestPermissions for more details.
+		return;
+	}
 	final Account availableAccounts[] = mAccountManager.getAccountsByType( accountType );
 
-	if ( availableAccounts.length == 0 ){
-		Toast.makeText( this, "No accounts", Toast.LENGTH_SHORT ).show();
-	}
+	if ( availableAccounts.length == 0 ){ Toast.makeText( this, "No accounts", Toast.LENGTH_SHORT ).show(); }
 	else{
 		String name[] = new String[ availableAccounts.length ];
-		for ( int i = 0; i < availableAccounts.length; i++ ){
-			name[ i ] = availableAccounts[ i ].name;
-		}
+		for ( int i = 0; i < availableAccounts.length; i++ ){ name[ i ] = availableAccounts[ i ].name; }
 
 		// Account picker
 		mAlertDialog = new AlertDialog.Builder( this ).setTitle( "Pick Account" ).setAdapter(
@@ -378,4 +375,24 @@ private void showMessage( final String msg ){
 		@Override public void run(){ Toast.makeText( getBaseContext(), msg, Toast.LENGTH_SHORT ).show(); }
 	} );
 }//showMessage
+
+
+
+@Override protected void onRestart(){
+	super.onRestart();
+	// Reload Logback log: http://stackoverflow.com/questions/3803184/setting-logback-appender-path-programmatically/3810936#3810936
+	mLoggerContext.reset();
+
+//I prefer autoConfig() over JoranConfigurator.doConfigure() so I don't need to find the file myself.
+	try{ mContextInitializer.autoConfig(); }
+	catch ( JoranException X ){ X.printStackTrace(); }
+}//onRestart()
+
+@Override public void onDestroy(){
+	super.onDestroy();
+	mLog.trace( "onDestroy():\t" );
+	mLoggerContext.stop();//flush log
 }
+
+
+}//Main1

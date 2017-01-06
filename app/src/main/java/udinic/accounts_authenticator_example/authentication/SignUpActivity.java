@@ -4,17 +4,15 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.*;
-import android.util.Log;
 import android.view.View;
 import android.widget.*;
 
 import org.peacekeeper.app.R;
+import org.slf4j.LoggerFactory;
 
 
 import static udinic.accounts_authenticator_example.authentication.AccountGeneral.sServerAuthenticate;
 import static udinic.accounts_authenticator_example.authentication.AuthenticatorActivity.*;
-
-//import com.udinic.accounts_example.*;
 
 
 /**
@@ -25,15 +23,9 @@ import static udinic.accounts_authenticator_example.authentication.Authenticator
  User: udinic
  */
 public class SignUpActivity extends Activity{
+static private final org.slf4j.Logger mLog = LoggerFactory.getLogger( SignUpActivity.class );
 
-private String TAG = getClass().getSimpleName();
 private String mAccountType;
-
-@Override
-public void onBackPressed(){
-	setResult( RESULT_CANCELED );
-	super.onBackPressed();
-}
 
 @Override
 protected void onCreate( Bundle savedInstanceState ){
@@ -52,56 +44,78 @@ protected void onCreate( Bundle savedInstanceState ){
 	} );
 	findViewById( R.id.submit ).setOnClickListener( new View.OnClickListener(){
 		@Override
-		public void onClick( View v ){
-			createAccount();
-		}
+		public void onClick( View v ){ createAccount(); }
 	} );
+}//onCreate()
+
+private void createAccount(){// Validation!
+
+		String //name = ( (TextView) findViewById( R.id.name ) ).getText().toString().trim()
+				accountName = ( (TextView) findViewById( R.id.accountName ) ).getText().toString().trim()
+				, accountEmail = ( (TextView) findViewById( R.id.accountEmail  ) ).getText().toString().trim()
+			, accountZIP = ( (TextView) findViewById(R.id.ZIP ) ).getText().toString().trim();
+
+	try{
+		String authtoken = sServerAuthenticate.userSignUp( this, accountName, accountEmail, accountZIP,
+		                                                   AccountGeneral.AUTHTOKEN_TYPE_FULL_ACCESS );
+	}catch ( Exception aE ){
+		aE.printStackTrace();
+	}
+
+}//createAccount()
+
+
+@Override public void onBackPressed(){
+	setResult( RESULT_CANCELED );
+	super.onBackPressed();
 }
 
-private void createAccount(){
+}//SignUpActivity
 
-	// Validation!
 
+/*
+private void createAccount(){// Validation!
 	new AsyncTask< String, Void, Intent >(){
 
 		String name = ( (TextView) findViewById( R.id.name ) ).getText().toString().trim()
-			, accountName = ( (TextView) findViewById(R.id.accountName ) ).getText().toString().trim()
-			, accountPassword = ( (TextView) findViewById(R.id.accountPassword ) ).getText().toString().trim();
+//				, accountName = ( (TextView) findViewById( R.id.accountName ) ).getText().toString().trim()
+				, accountEmail = ( (TextView) findViewById( R.id.accountEmail  ) ).getText().toString().trim()
+				, accountZIP = ( (TextView) findViewById(R.id.ZIP ) ).getText().toString().trim();
+
+//			, accountPassword = null;
+//		, accountPassword = ( (TextView) findViewById(R.id.accountPassword ) ).getText().toString().trim();
 
 		@Override protected Intent doInBackground( String... params ){
+			mLog.debug( "udinic > Started authenticating" );
 
-			Log.d( "udinic", TAG + "> Started authenticating" );
-
-			String authtoken = null;
 			Bundle data = new Bundle();
 			try{
-				authtoken = sServerAuthenticate.userSignUp( name, accountName, accountPassword,
-				                                            AccountGeneral.AUTHTOKEN_TYPE_FULL_ACCESS );
+				String authtoken = sServerAuthenticate.userSignUp( name, accountEmail, accountZIP,
+				                                                   AccountGeneral.AUTHTOKEN_TYPE_FULL_ACCESS );
 
-				data.putString( AccountManager.KEY_ACCOUNT_NAME, accountName );
-				data.putString( AccountManager.KEY_ACCOUNT_TYPE, mAccountType );
 				data.putString( AccountManager.KEY_AUTHTOKEN, authtoken );
-				data.putString( PARAM_USER_PASS, accountPassword );
+				data.putString( AccountManager.KEY_USERDATA, accountEmail );
+				data.putString( AccountManager.KEY_ACCOUNT_TYPE, mAccountType );
+//				data.putString( PARAM_USER_PASS, accountPassword );
+				data.putString( PARAM_USER_PASS, accountZIP );
 			}
-			catch( Exception e ){ data.putString( KEY_ERROR_MESSAGE, e.getMessage() ); }
+			catch ( Exception e ){ data.putString( KEY_ERROR_MESSAGE, e.getMessage() ); }
 
-			final Intent res = new Intent();
-			return res.putExtras( data );
-			//return res;
-		}
+			final Intent res = new Intent().putExtras( data );
+			return res;
+		}//doInBackground
 
-		@Override
-		protected void onPostExecute( Intent intent ){
+		@Override protected void onPostExecute( Intent intent ){
 			if ( intent.hasExtra( KEY_ERROR_MESSAGE ) ){
 				Toast.makeText( getBaseContext(), intent.getStringExtra( KEY_ERROR_MESSAGE ),
-				                Toast.LENGTH_SHORT ).show();
+				                Toast.LENGTH_LONG ).show();
 			}
 			else{
 				setResult( RESULT_OK, intent );
 				finish();
 			}
-		}
-	}.execute();
-}
-
-}//SignUpActivity
+		}//onPostExecute
+	}
+			.execute();
+}//createAccount()
+*/

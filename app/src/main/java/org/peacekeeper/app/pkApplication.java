@@ -1,6 +1,10 @@
 package org.peacekeeper.app;
 
 import android.app.Application;
+import android.content.Context;
+import android.support.multidex.MultiDex;
+
+import com.onesignal.OneSignal;
 
 import org.slf4j.*;
 
@@ -20,9 +24,14 @@ static private final Logger				mLog	= LoggerFactory.getLogger( pkApplication.cla
 @Override
 public void onCreate() {
     super.onCreate();
-
+	//OneSignal.startInit( this ).init();
     //mLog.debug("pkApplication.OnCreate:\t name: " + SpongyCastleProvider.getName() + "\t info: " + SpongyCastleProvider.getInfo());
 
+}
+
+@Override protected void attachBaseContext(Context base ) {
+	super.attachBaseContext(base);
+	MultiDex.install( this );
 }
 
 

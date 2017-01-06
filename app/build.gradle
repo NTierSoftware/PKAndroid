@@ -6,11 +6,13 @@ android {
 
     defaultConfig {
         applicationId "org.peacekeeper.PeaceKeeperDev"
-//        minSdkVersion 16
-        minSdkVersion 9
+        minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+
+        // https://developer.android.com/studio/build/multidex.html
+        multiDexEnabled true
 
 // https://documentation.onesignal.com/v2.0/docs/android-studio-sdk-installation
         manifestPlaceholders = [manifestApplicationId          : "${applicationId}",
@@ -20,7 +22,8 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+//http://stackoverflow.com/questions/29846750/what-is-the-default-for-minifyenabled-for-buildtype-not-explicitly-scripted
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -34,14 +37,12 @@ android {
 }
 
 dependencies {
+    compile 'com.android.support:multidex:1.0.0'
+
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
 
     compile 'com.android.support:appcompat-v7:23.4.0'
-
-/*
-    compile 'com.android.support:appcompat-v7:23.1.1'
-*/
     compile 'com.android.support:design:23.1.1'
 
     compile 'com.madgag.spongycastle:core:1.54.+'
@@ -49,25 +50,16 @@ dependencies {
     compile 'com.madgag.spongycastle:pkix:1.54.+'
     compile 'com.madgag.spongycastle:pg:1.54.+'
 
-    compile 'com.onesignal:OneSignal:2.+@aar'
-
+//OneSignal
+    compile 'com.onesignal:OneSignal:3.+@aar'
+    // Required for OneSignal, even if you have added FCM.
     compile 'com.google.android.gms:play-services-gcm:+'
-    compile 'com.google.android.gms:play-services-analytics:+'
-    compile 'com.google.android.gms:play-services-location:+'
+    // Required for geotagging
+    compile "com.google.android.gms:play-services-location:+"
+//end OneSignal
+
 
 /* logback */
-/*
-    compile 'com.github.tony19:logback-android-core:1.1.1-4'
-    compile 'com.github.tony19:logback-android-classic:1.1.1-4'
-    compile 'org.slf4j:slf4j-api:1.7.6'
-*/
-
-/*
-    compile 'org.slf4j:slf4j-api:1.7.21'
-    compile 'com.github.tony19:logback-android-core:1.1.1-5'
-    compile 'com.github.tony19:logback-android-classic:1.1.1-5'
-*/
-
     compile 'org.slf4j:slf4j-api:1.7.+'
     compile 'com.github.tony19:logback-android-core:1.1.+'
     compile 'com.github.tony19:logback-android-classic:1.1.+'
@@ -76,4 +68,13 @@ dependencies {
     compile 'com.google.code.gson:gson:2.+'
 
     compile 'com.android.volley:volley:1.+'
+
+    compile 'io.reactivex:rxandroid:1.2.+'
+    compile 'io.reactivex:rxjava:1.1.+'
+
+/*    compile 'io.reactivex:rxandroid:1.2.1'
+ Because RxAndroid releases are few and far between, it is recommended you also
+ explicitly depend on RxJava's latest version for bug fixes and new features.
+    compile 'io.reactivex:rxjava:1.1.6' */
+    compile 'com.android.support.constraint:constraint-layout:1.0.0-beta4'
 }

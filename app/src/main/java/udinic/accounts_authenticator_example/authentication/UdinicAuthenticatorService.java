@@ -11,7 +11,6 @@ import org.slf4j.*;
  * Created with IntelliJ IDEA.
  * User: Udini
  * Date: 19/03/13
- * Time: 19:10
  */
 public class UdinicAuthenticatorService extends Service {
 static private final Logger mLog = LoggerFactory.getLogger( UdinicAuthenticatorService.class );
@@ -21,6 +20,7 @@ static private final Logger mLog = LoggerFactory.getLogger( UdinicAuthenticatorS
 		mLog.debug("UdinicAuthenticatorService:\t onBind");
 
         UdinicAuthenticator authenticator = new UdinicAuthenticator(this);
-        return authenticator.getIBinder();
-    }
-}
+    return authenticator.getIBinder();
+    }//onBind()
+
+}//UdinicAuthenticatorService

@@ -16,5 +16,6 @@ public class AccountGeneral{
 	;
 
 //public static final ServerAuthenticate sServerAuthenticate = new ParseComServerAuthenticate();
-public static final ServerAuthenticate sServerAuthenticate = new pkServerAuthenticate();
-}
+//public static final ServerAuthenticate sServerAuthenticate = new pkServerAuthenticate();
+public static final pkServerAuthenticate sServerAuthenticate = new pkServerAuthenticate();
+}//class AccountGeneral
