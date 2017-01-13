@@ -4,8 +4,10 @@ android {
     compileSdkVersion 23
     buildToolsVersion "23.0.3"
 
+/*    applicationId "org.peacekeeper.PeaceKeeperDev"*/
+
     defaultConfig {
-        applicationId "org.peacekeeper.PeaceKeeperDev"
+        applicationId "org.peacekeeper.app"
         minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
@@ -32,9 +34,12 @@ android {
             java.srcDirs = ['src/main/java', 'src/main/java/activity', 'src/main/java/crypto', 'src/main/java/org.peacekeeper/exception']
         }
     }
-    productFlavors {
+    productFlavors {    }
+
+    dexOptions {
+        javaMaxHeapSize "2g"
     }
-}
+}//android
 
 dependencies {
     compile 'com.android.support:multidex:1.0.0'
@@ -59,6 +64,8 @@ dependencies {
 //end OneSignal
 
 
+
+
 /* logback */
     compile 'org.slf4j:slf4j-api:1.7.+'
     compile 'com.github.tony19:logback-android-core:1.1.+'
@@ -77,4 +84,7 @@ dependencies {
  explicitly depend on RxJava's latest version for bug fixes and new features.
     compile 'io.reactivex:rxjava:1.1.6' */
     compile 'com.android.support.constraint:constraint-layout:1.0.0-beta4'
+
+
+    compile 'com.google.android.gms:play-services-maps:+'
 }

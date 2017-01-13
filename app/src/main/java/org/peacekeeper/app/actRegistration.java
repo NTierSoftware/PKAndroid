@@ -109,6 +109,9 @@ public void buttonGeocode( View view ){
 	// fetch the address. As far as the user is concerned, pressing the Fetch Address button
 	// immediately kicks off the process of getting the address.
 	mAddressRequested = true;
+
+
+	startActivity(new Intent(this, MyLocationDemoActivity.class));
 	updateUIWidgets();
 }
 
