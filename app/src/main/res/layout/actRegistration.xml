@@ -8,6 +8,7 @@
     android:layout_height="match_parent"
     >
 
+<!--
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -26,6 +27,7 @@
         app:layout_constraintVertical_bias="0.0"
         app:layout_constraintHorizontal_bias="0.52"
         android:layout_marginTop="8dp"/>
+-->
 
 
     <EditText
@@ -70,6 +72,7 @@
         android:inputType="textMultiLine|textPostalAddress|textCapWords|"/>
 
 
+<!--
     <Button
         android:id="@+id/buttonGeocode"
         android:onClick="buttonGeocode"
@@ -82,6 +85,7 @@
         app:layout_constraintVertical_bias="0.92"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintHorizontal_bias="0.99"/>
+-->
 
 
     <ImageView

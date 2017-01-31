@@ -10,6 +10,9 @@ import org.slf4j.*;
 
 import java.security.Provider;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.util.ContextInitializer;
+
 public class pkApplication extends Application {
 //https://rtyley.github.io/spongycastle/
 /*
@@ -17,7 +20,12 @@ static private final Provider SpongyCastleProvider = new org.spongycastle.jce.pr
 
 static { java.security.Security.insertProviderAt(SpongyCastleProvider, 1); }
 */
-
+/*
+static private final LoggerContext      mLoggerContext      =
+		(LoggerContext) LoggerFactory.getILoggerFactory();
+static private final ContextInitializer mContextInitializer =
+		new ContextInitializer( mLoggerContext );
+*/
 static private final Logger				mLog	= LoggerFactory.getLogger( pkApplication.class );
 
 
@@ -25,7 +33,8 @@ static private final Logger				mLog	= LoggerFactory.getLogger( pkApplication.cla
 public void onCreate() {
     super.onCreate();
 	//OneSignal.startInit( this ).init();
-    //mLog.debug("pkApplication.OnCreate:\t name: " + SpongyCastleProvider.getName() + "\t info: " + SpongyCastleProvider.getInfo());
+	mLog.debug("pkApplication.OnCreate");
+//    mLog.debug("pkApplication.OnCreate:\t name: " + SpongyCastleProvider.getName() + "\t info: " + SpongyCastleProvider.getInfo());
 
 }
 

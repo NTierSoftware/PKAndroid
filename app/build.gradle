@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
+// https://medium.com/google-developers/picking-your-compilesdkversion-minsdkversion-targetsdkversion-a098a0341ebd#.wuukuj7n9
     compileSdkVersion 23
     buildToolsVersion "23.0.3"
 
-/*    applicationId "org.peacekeeper.PeaceKeeperDev"*/
-
     defaultConfig {
         applicationId "org.peacekeeper.app"
+//    applicationId "org.peacekeeper.PeaceKeeperDev"
         minSdkVersion 16
-        targetSdkVersion 23
+        //targetSdkVersion 23
         versionCode 1
         versionName "1.0"
 
@@ -20,8 +20,8 @@ android {
         manifestPlaceholders = [manifestApplicationId          : "${applicationId}",
                                 onesignal_app_id               : "381999bd-5010-4fc7-bce7-89a6ea4dc664",
                                 onesignal_google_project_number: "550772033740"]
-
     }
+
     buildTypes {
         release {
             minifyEnabled true
@@ -29,16 +29,15 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
     sourceSets {
         main {
             java.srcDirs = ['src/main/java', 'src/main/java/activity', 'src/main/java/crypto', 'src/main/java/org.peacekeeper/exception']
         }
     }
-    productFlavors {    }
+    productFlavors {}
 
-    dexOptions {
-        javaMaxHeapSize "2g"
-    }
+    dexOptions { javaMaxHeapSize "4g" }
 }//android
 
 dependencies {
@@ -63,9 +62,6 @@ dependencies {
     compile "com.google.android.gms:play-services-location:+"
 //end OneSignal
 
-
-
-
 /* logback */
     compile 'org.slf4j:slf4j-api:1.7.+'
     compile 'com.github.tony19:logback-android-core:1.1.+'
@@ -84,7 +80,6 @@ dependencies {
  explicitly depend on RxJava's latest version for bug fixes and new features.
     compile 'io.reactivex:rxjava:1.1.6' */
     compile 'com.android.support.constraint:constraint-layout:1.0.0-beta4'
-
 
     compile 'com.google.android.gms:play-services-maps:+'
 }

@@ -48,11 +48,11 @@ public class actRegistration extends AppCompatActivity implements
  https://github.com/googlesamples/android-google-accounts/tree/master/QuickStart.
  */
 
-//protected static final String ADDRESS_REQUESTED_KEY = "address-request-pending";
+protected static final String ADDRESS_REQUESTED_KEY = "address-request-pending";
 //protected static final String LOCATION_ADDRESS_KEY  = "LOCN";
 
 // Provides the entry point to Google Play services.
-//protected GoogleApiClient mGoogleApiClient;
+protected GoogleApiClient mGoogleApiClient;
 //Represents a geographical location.
 protected Location mLastLocation;
 
@@ -72,7 +72,7 @@ protected TextView mEditHomeLocation;
 // Visible while the address is being fetched.
 ProgressBar mProgressBar;
 // Kicks off the request to fetch an address when pressed.
-//Button mbuttonGeocode;
+Button mbuttonGeocode;
 
 static private final Logger mLog = LoggerFactory.getLogger( actRegistration.class );
 static private final LoggerContext mLoggerContext =
@@ -96,7 +96,7 @@ public void onCreate( Bundle savedInstanceState ){
 	mEditHomeLocation = (TextView) findViewById( R.id.editHomeLocation );
 	mEditHomeLocation.setText( intent.getStringExtra(FetchAddressIntentService.LOCATION) );
 	mProgressBar = (ProgressBar) findViewById( R.id.progress_bar );
-	//mbuttonGeocode = (Button) findViewById( R.id.buttonGeocode );
+	mbuttonGeocode = (Button) findViewById( R.id.buttonGeocode );
 
 	updateValuesFromBundle( savedInstanceState );
 
@@ -163,12 +163,12 @@ public void buttonGeocode( View view ){
 @Override public void onConnectionSuspended( int cause ){
 // The connection to Google Play services was lost for some reason. We call connect() to attempt to re-establish the connection.
 	mLog.error( "Connection suspended" );
-	//mGoogleApiClient.connect();
+	mGoogleApiClient.connect();
 }//onConnectionSuspended
 
 @Override public void onSaveInstanceState( Bundle savedInstanceState ){
 	// Save whether the address has been requested.
-	//savedInstanceState.putBoolean( ADDRESS_REQUESTED_KEY, mAddressRequested );
+	savedInstanceState.putBoolean( ADDRESS_REQUESTED_KEY, mAddressRequested );
 
 	// Save the address string.
 	savedInstanceState.putString( FetchAddressIntentService.LOCATION, mAddressOutput );
@@ -179,22 +179,19 @@ public void buttonGeocode( View view ){
 private void updateValuesFromBundle( Bundle savedInstanceState ){
 	if ( savedInstanceState != null ){
 		// Check savedInstanceState to see if the address was previously requested.
-/*		if ( savedInstanceState.keySet().contains( ADDRESS_REQUESTED_KEY ) ){
+		if ( savedInstanceState.keySet().contains( ADDRESS_REQUESTED_KEY ) ){
 			mAddressRequested = savedInstanceState.getBoolean( ADDRESS_REQUESTED_KEY );
-		}*/
+		}
 		// Check savedInstanceState to see if the location address string was previously found
 		// and stored in the Bundle. If it was found, display the address string in the UI.
 		if ( savedInstanceState.keySet().contains( FetchAddressIntentService.LOCATION ) ){
 			mAddressOutput = savedInstanceState.getString( FetchAddressIntentService.LOCATION );
-			//displayAddressOutput();
-			mEditHomeLocation.setText( mAddressOutput );
-
+			displayAddressOutput();
 		}
 	}
 }
 
 //Builds a GoogleApiClient. Uses {@code #addApi} to request the LocationServices API.
-/*
 protected synchronized void buildGoogleApiClient(){
 	mGoogleApiClient = new Builder( this )
 			.addConnectionCallbacks( this )
@@ -202,19 +199,18 @@ protected synchronized void buildGoogleApiClient(){
 			.addApi( LocationServices.API )
 			.build();
 }
-*/
 
 @Override protected void onStart(){
 	super.onStart();
 	mLog.trace( "onStart():\t" );
 	mUtility = pkUtility.getInstance( this );
-	//mGoogleApiClient.connect();
+	mGoogleApiClient.connect();
 }
 
 @Override protected void onStop(){
 	mLog.trace( "onStop():\t" );
 	mLoggerContext.stop();//flush log
-	//mGoogleApiClient.disconnect();
+	mGoogleApiClient.disconnect();
 	super.onStop();
 }
 
@@ -241,6 +237,8 @@ protected synchronized void buildGoogleApiClient(){
 	mUtility.close();
 }
 
+
+
 //Creates an intent, adds location data to it as an extra, and starts the intent service for fetching an address.
 /*
 protected void startIntentService(){
@@ -261,17 +259,17 @@ protected void startIntentService(){
 */
 
 //Updates the address in the UI.
-//protected void displayAddressOutput(){ mEditHomeLocation.setText( mAddressOutput ); }
+protected void displayAddressOutput(){ mEditHomeLocation.setText( mAddressOutput ); }
 
 // Toggles the visibility of the progress bar. Enables or disables the Fetch Address button.
 private void updateUIWidgets(){
 	if ( mAddressRequested ){
 		mProgressBar.setVisibility( ProgressBar.VISIBLE );
-		//mbuttonGeocode.setEnabled( false );
+		mbuttonGeocode.setEnabled( false );
 	}
 	else{
 		mProgressBar.setVisibility( ProgressBar.GONE );
-		//mbuttonGeocode.setEnabled( true );
+		mbuttonGeocode.setEnabled( true );
 	}
 }
 

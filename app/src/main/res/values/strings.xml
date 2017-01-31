@@ -11,7 +11,6 @@ see files
 
     <string name="accountType">peacekeeper.authenticator.com</string>
     <!--    <string name="accountType2">com.udinic.auth_example</string>-->
-    <string name="AuthSvcDesc">Authorizes PeaceKeeper</string>
 
     <!--
     <string name="crash_toast_text">PeaceKeeper is sending status now.</string>
@@ -24,12 +23,8 @@ see files
     <string name="DbSqLiteName">PeaceKeeper database</string>
 -->
 
-    <string name="SyncSvcDesc">Syncs PeaceKeeper mobile data to the Webserver</string>
     <string name="action_settings">Settings???correct this</string>
     <string name="action_Exit">Exit</string>
-    <string name="AUTHORITY">org.peacekeeper.android</string>
-
-    <string name="label">Udinic</string>
 
     <string name="signup_title">Create new account</string>
     <string name="login_label">Log in</string>
@@ -37,25 +32,11 @@ see files
     <!-- Strings related to login -->
     <string name="prompt_name">Name:</string>
     <string name="prompt_email">Email:</string>
-    <string name="prompt_password">Password:</string>
-    <string name="action_sign_in">Sign in or register</string>
     <string name="action_next">Next</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="error_invalid_email">This email address is invalid</string>
-    <string name="error_invalid_password">This password is too short</string>
-    <string name="error_incorrect_password">This password is incorrect</string>
-    <string name="error_field_required">This field is required</string>
-    <string name="permission_rationale">"Contacts permissions are needed for providing email
-        completions."
-    </string>
 
-    <string name="Registration">Registration</string>
-
-<!--Geocode constants-->
+    <!--Geocode constants-->
     <string name="NoLocationPermission">Location Permission required</string>
     <string name="no_geocoder_available">No geocoder available</string>
-
-    <string name="fetch_address">Fetch address</string>
 
     <string name="address_found">Address found</string>
 
@@ -66,8 +47,10 @@ see files
 
     <!--    Permissions    -->
     <string name="permission_rationale_location">Access to the location service is required to demonstrate the \'my location\' feature, which shows your current location on the map.</string>
-    <string name="location_permission_denied">This sample requires location permission to enable the \'my location\' layer. Please try again and grant access to use the location.\nIf the permission has been permanently denied, it can be enabled from the System Settings &gt; Apps &gt; \'Google Maps API Demos\'.</string>
+    <string name="location_permission_denied">PeaceKeeper requires location permission to enable the \'my location\' layer. Please try again and grant access to use the location.\nIf the permission has been permanently denied, it can be enabled from the System Settings &gt; Apps &gt; \'Google Maps API Demos\'.</string>
     <string name="permission_required_toast">Location permission is required for this demo.</string>
-    <string name="my_location_demo_label">My Location Demo</string>
+<!--    <string name="my_location_demo_label">My Location Demo</string>-->
+    <string name="RegisterYourLocn">Long tap your Registration location</string>
+    <string name="GoogleApiClientConnFailed">FAILED to connect to Google api!</string>
 
 </resources>

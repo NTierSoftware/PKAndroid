@@ -18,6 +18,7 @@ package org.peacekeeper.app;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -27,6 +28,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
+import com.google.android.gms.maps.model.LatLng;
 
 import org.peacekeeper.util.PermissionUtils;
 
@@ -61,13 +63,12 @@ private GoogleMap mMap;
 public void onMapReady( GoogleMap map ){
 	mMap = map;
 
+
 	mMap.setOnMyLocationButtonClickListener( this );
 	enableMyLocation();
 }
 
-/**
- Enables the My Location layer if the fine location permission has been granted.
- */
+//Enables the My Location layer if the fine location permission has been granted.
 private void enableMyLocation(){
 	if ( ContextCompat.checkSelfPermission( this, Manifest.permission.ACCESS_FINE_LOCATION )
 	     != PackageManager.PERMISSION_GRANTED ){
@@ -76,7 +77,9 @@ private void enableMyLocation(){
 		                                   Manifest.permission.ACCESS_FINE_LOCATION, true );
 	}
 	// Access to the location has been granted to the app.
-	else if ( mMap != null ){ mMap.setMyLocationEnabled( true ); }
+	else if ( mMap != null ){
+		mMap.setMyLocationEnabled( true );
+	}
 }
 
 @Override
@@ -131,3 +134,4 @@ private void showMissingPermissionError(){
 
 
 }
+

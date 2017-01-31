@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest package="org.peacekeeper.app"
           xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <!-- <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/> -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <!-- http://developer.samsung.com/technical-doc/view.do?v=T000000103 -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
@@ -12,15 +13,19 @@
     <uses-permission android:name="android.permission.USE_CREDENTIALS"/>
     <!-- Authenticator -->
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_PROFILE"/>
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true"/>
 
     <!-- http://stackoverflow.com/questions/15718869/how-to-lock-android-apps-orientation-to-portrait-mode -->
     <uses-feature
         android:name="android.hardware.screen.portrait"
         android:required="true"/>
-
-    <uses-permission android:name="android.permission.READ_PROFILE"/>
-    <uses-permission android:name="android.permission.READ_CONTACTS"/>
 
     <!--
         <activity
@@ -44,10 +49,10 @@
      You need a different API key for each encryption key, including the release key that is used to
      sign the APK for publishing.
      You can define the keys for the debug and release targets in src/debug/ and src/release/.
--->
+        -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_maps_key" />
+            android:value="@string/google_maps_key"/>
 
         <!--
                 <activity
@@ -60,17 +65,18 @@
                 </activity>
         -->
 
-        <activity android:name=".actRegistration">
-            android:label="@string/registration"
+
+        <!-- <activity android:name=".actRegistration"> -->
+        <activity android:name=".actGeocoder">
+            android:label="@string/RegisterYourLocn"
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
+
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity
-            android:name=".MyLocationDemoActivity"
-            android:label="@string/my_location_demo_label"/>
-
+       <!-- <activity android:name=".MyLocationDemoActivity"/>-->
+        <!-- android:label="@string/my_location_demo_label" -->
 
 
         <!-- Authenticator related activities and service needs to be declared here in order for the app to recognize them -->
@@ -91,12 +97,15 @@
                 android:resource="@xml/authenticator"/>
         </service>
 
-        <activity android:name=".Registration1">
-        </activity>
+        <activity
+            android:name=".actRegistration"
+            android:label="Registration"/>
 
-        <!-- Service to asynchronously fetch a location address using a Geocoder. Setting the
+        <!--
+Service to asynchronously fetch a location address using a Geocoder. Setting the
 android:exported attribute to "false" stops other apps from starting this
-service, even when using an explicit intent. -->
+service, even when using an explicit intent.
+        -->
         <service
             android:name="org.peacekeeper.service.FetchAddressIntentService"
             android:exported="false"/>
