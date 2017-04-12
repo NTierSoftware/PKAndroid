@@ -4,6 +4,9 @@
     <internal_templates>
       <template name="Class.java" reformat="true" live-template-enabled="true" enabled="true" />
     </internal_templates>
+    <default_templates>
+      <template name="AsyncTask.java" reformat="true" live-template-enabled="true" />
+    </default_templates>
     <includes_templates>
       <template name="File Header.java" reformat="true" live-template-enabled="true" enabled="true" />
     </includes_templates>

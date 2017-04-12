@@ -5,35 +5,30 @@
 		c) The abstract function needing override getRequest().
 http://stackoverflow.com/questions/33228364/need-to-send-multiple-volley-requests-in-a-sequence/38315244#38315244
 */
-package org.peacekeeper.rest;// Created by John Donaldson, NTier Software Engineering on 4/3/2016.
-
+package org.peacekeeper.service;// Created by John Donaldson, NTier Software Engineering on 4/3/2016.
 
 import android.support.annotation.NonNull;
-//import android.widget.Toast;
 
 import com.android.volley.*;
 import com.android.volley.Request.*;
 import com.android.volley.Response.ErrorListener;
-import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.*;
 
-import org.json.*;
-import org.peacekeeper.crypto.SecurityGuard;
+import org.json.JSONObject;
 import org.peacekeeper.util.pkUtility;
 
 import java.net.*;
 import java.util.*;
 
-
-public abstract class LinkedRequest{
+public class pkRequest{
 
 //getRequest is used for the FUTURE request of mLinkedRequest.
 //for CURRENT request of this() use the constructor
-abstract public JSONObject getRequest( final JSONObject response );
+//abstract public JSONObject getRequest( final JSONObject response );
 
 protected static org.slf4j.Logger mLog;
 protected final static pkUtility mUtility = pkUtility.getInstance();
 protected final static RequestQueue mRequestQueue = mUtility.getRequestQueue();
-//protected final static Toast mToast = Toast.makeText( mUtility.getBaseContext(), "", Toast.LENGTH_LONG );
 
 static private HashMap< String, String > newHeader(){
 	HashMap< String, String > newHeader = new HashMap<>();
@@ -55,22 +50,18 @@ static{	// http://stackoverflow.com/questions/19797842/patch-request-android-vol
 private UUID msg_id = UUID.randomUUID();
 
 //each enum needs priority and method, url, request, response, errlsnr
-//protected final Response.Listener< JSONObject > mJsonResp =  new Response.Listener< JSONObject >(){
 protected Response.Listener< JSONObject > mJsonResp =  new Response.Listener< JSONObject >(){
 	@Override public void onResponse( JSONObject response ){
-		String respStr = "\tresponse:\t" + ((response == null)? "NULL" : response.toString() );
-		//mToast.setText( respStr );
-		//mToast.show();
-		mLog.debug( "onResponse\t url:\t" + mPkURL.toString()  + respStr );
+		String respStr = "response:\t" + ((response == null)? "NULL" : response.toString() );
+		mLog.debug( "onResponse\t url:\t" + mPkURL.toString() + "\t:Response:\t" + respStr );
+		//mLog.debug(  "Response:\t" + respStr );
 
-		nextRequest( response );
+		//nextRequest( response );
 	}
 };
 
 protected final ErrorListener mErrLsnr = new ErrorListener(){
 	@Override public void onErrorResponse( VolleyError error ){
-		//mToast.setText( "Error:\t" + error.getMessage() );
-		//mToast.show();
 		mLog.error( "Error!:\t" + error.getMessage() );
 
 		if( error.networkResponse != null){
@@ -82,16 +73,6 @@ protected final ErrorListener mErrLsnr = new ErrorListener(){
 };
 
 
-/*
-private HashMap< String, String > getAuthorizationHeader(JSONObject response){
-	HashMap< String, String > newHeader = newHeader();
-	newHeader.put( "Authorization", SecurityGuard.getAuthToken(response) );
-//	newHeader.put( "Authorization", "test getAuthToken()" );
-	mLog.debug( newHeader.toString() );
-	return newHeader;
-}
-*/
-
 //PLACE ALL URL NAMES HERE
 public enum pkURL{
 	//each link in the chain should be of ever increasing priority to reflect its progression.
@@ -99,7 +80,7 @@ public enum pkURL{
 	// http://stackoverflow.com/questions/28314160/error-in-volley-patch
 	// java.net.ProtocolException: Unknown method 'PATCH'; must be one of [OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE]
 	// http://stackoverflow.com/questions/19797842/patch-request-android-volley
-	, registrations2( Method.POST, Priority.HIGH, LinkedRequest.registrations2Hdr)
+	, registrations2( Method.POST, Priority.HIGH, pkRequest.registrations2Hdr)
 	, registrations(Method.POST, Priority.NORMAL )
 	, status
 	;
@@ -113,13 +94,13 @@ public enum pkURL{
 	pkURL(){
 		mMethod = Method.GET;
 		mPriority = Priority.LOW;
-		mHeader = LinkedRequest.mHeaders;
+		mHeader = pkRequest.mHeaders;
 	}
 
 	pkURL(int aMethod, Priority aPriority ){
 		mMethod = aMethod;
 		mPriority = aPriority;
-		mHeader = LinkedRequest.mHeaders;
+		mHeader = pkRequest.mHeaders;
 	}
 
 	pkURL(int aMethod,
@@ -129,15 +110,17 @@ public enum pkURL{
 		mHeader = aHeader;
 	}
 
+
+
 }//enum pkURL
 
 
 public pkURL mPkURL;
 
-private JsonObjectRequest mJsonRequest = null;//The current request of this link. For future Request override getRequest().
-private LinkedRequest mLinkedRequest = null;
+private JsonObjectRequest mJsonRequest   = null;//The current request of this link. For future Request override getRequest().
+private pkRequest         mLinkedRequest = null;
 //This constructor is only used for intermediate and last links in the chain.
-public LinkedRequest( @NonNull pkURL aPkURL, LinkedRequest aLinkedRequest ){
+public pkRequest( @NonNull pkURL aPkURL, pkRequest aLinkedRequest ){
 	mLog = org.slf4j.LoggerFactory.getLogger( getClass() );
 	mPkURL = aPkURL;
 
@@ -149,7 +132,7 @@ public LinkedRequest( @NonNull pkURL aPkURL, LinkedRequest aLinkedRequest ){
 
 
 //This constructor is  only used for the first link in the chain or singleton requests.
-public LinkedRequest( @NonNull final pkURL aPkURL, @NonNull JSONObject aRequestBody, LinkedRequest aLinkedRequest ){
+public pkRequest(  final pkURL aPkURL, JSONObject aRequestBody, pkRequest aLinkedRequest ){
 	this( aPkURL, aLinkedRequest );
 
 	try{ aRequestBody.put( "_id", msg_id.toString() ); } catch ( Exception ignore ){}
@@ -166,11 +149,27 @@ public LinkedRequest( @NonNull final pkURL aPkURL, @NonNull JSONObject aRequestB
 }//cstr
 
 
+//This constructor is  only used for the first link in the chain or singleton requests.
+public pkRequest(  final pkURL aPkURL  ){
+	mLog = org.slf4j.LoggerFactory.getLogger( getClass() );
+
+	mPkURL = aPkURL;
+	JSONObject requestBody = new JSONObject(  );
+	try{ requestBody.put( "_id", msg_id.toString() ); } catch ( Exception ignore ){}
+
+	mJsonRequest =
+			new JsonObjectRequest( aPkURL.mMethod, toURL(), requestBody, mJsonResp, mErrLsnr ){
+				@Override public Priority getPriority() { return mPkURL.mPriority; }
+				@Override public Map<String, String> getHeaders() throws AuthFailureError{ return aPkURL.mHeader; }
+			};
+
+	mJsonRequest.setShouldCache( false );
+}//cstr
+
 
 private static final String URLhead = "http://173.17.175.92:82/"; //TODO make this HTTPS
-//private static final String URLhead = "http://192.168.1.156/"; //TODO make this HTTPS
-private String toURL(){ //} throws JSONException{
-//private < E extends Enum< E > > URL toURL( E URLPostOrGet ){
+//private static final String URLhead = "http://192.168.1.156/";
+private String toURL(){
 	URL url;
 
 	switch ( mPkURL){
@@ -222,39 +221,11 @@ private String toURL(){ //} throws JSONException{
 
 public void setResponseListener( Response.Listener< JSONObject > aJsonResp ){ this.mJsonResp = aJsonResp; }
 
-private Request nextRequest(final JSONObject aResponse ){//nextRequest() ties each link in the chain together and is called by the listener.
-	mLog.debug( "nextRequest:\t" + aResponse.toString() );
-	Request retVal = null;
-// * * * * * * This is how and where the the "future" request must be called/constructed. * * * * * *
-	if ( mLinkedRequest != null ){
-		final JSONObject requestBody = mLinkedRequest.getRequest( aResponse );
-
-		final int mMethod = mLinkedRequest.mPkURL.mMethod;
-		final String aURL = mLinkedRequest.toURL();
-
-		final Priority priority = mLinkedRequest.mPkURL.mPriority;
-		final Map<String, String> header = mLinkedRequest.mPkURL.mHeader;
-
-		this.mJsonRequest = new JsonObjectRequest( mMethod, aURL,
-		                                              requestBody,
-		                                           mLinkedRequest.mJsonResp, mLinkedRequest.mErrLsnr ){
-			@Override public Priority getPriority() { return priority; }
-			@Override public Map<String, String> getHeaders() throws AuthFailureError{ return header; }
-		};
-
-		mJsonRequest.setShouldCache( false );
-		this.mLinkedRequest = mLinkedRequest.mLinkedRequest;
-		retVal =  submit();
-	}//if
-// * * * * * *  * * * * * * * * * * * *  * * * * * * * * * * * *  * * * * * * * * * * * * * * * * * *
-
-return retVal;
-}//nextRequest()
 
 public Request submit(){
 	mLog.debug( "submit:\n" + this.toString() );
-	if ( mLinkedRequest != null ) mLog.debug( "mLinkedRequest:\t" + mLinkedRequest.toString() );
+	//if ( mLinkedRequest != null ) mLog.debug( "mLinkedRequest:\t" + mLinkedRequest.toString() );
 if ( mJsonRequest != null ) return mRequestQueue.add( mJsonRequest );
 return null;
 }//submit()
-}//class LinkedRequest
+}//class pkRequest

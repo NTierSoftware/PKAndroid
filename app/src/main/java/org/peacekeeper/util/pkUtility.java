@@ -43,6 +43,7 @@ private AssetManager mAssetManager;
 private static Context mContext;
 public static pkUtility getInstance(Context context){
 	 if (mUtility == null) { mUtility = new pkUtility(context); }
+	mLog.debug( "pkUtility getInstance");
 
      return mUtility;
 }
@@ -340,7 +341,6 @@ public RequestQueue getRequestQueue(){
 return mRequestQueue;
 }
 
-
 public void close(){//throws Exception
 	try {
 		if (mRequestQueue != null){
@@ -361,7 +361,10 @@ public void close(){//throws Exception
 	catch(Exception X){ mLog.error("pkUtility close error");}
 }//close()
 
-
+public boolean isDeviceRegisteredToPeaceKeeper(){
+//check storage
+	return false;
+}
 /*
 public void sendEmail(){
 	// http://stackoverflow.com/questions/8284706/send-email-via-gmail

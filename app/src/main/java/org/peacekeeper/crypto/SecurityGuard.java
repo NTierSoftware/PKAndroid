@@ -96,10 +96,12 @@ public SecurityGuard( final String aMessage ){
 static public void initSecurity(){ initSecurity( PROVIDER ); }
 //Moves provider to first place
 static private void initSecurity( Provider provider ){
+	mLog.debug( "initSecurity");
+
 	Security.removeProvider( provider.getName() );
 
 	int insertProviderAt = Security.insertProviderAt( provider, 1 );
-	//mLog.debug( "insertProviderAt:\t" + Integer.toString( insertProviderAt ) );
+	mLog.debug( "insertProviderAt:\t" + Integer.toString( insertProviderAt ) );
 	//mLog.debug( listProviders() );
 }//initSecurity
 

@@ -4,8 +4,8 @@ import org.peacekeeper.app.R;
 import org.peacekeeper.util.pkUtility;
 
 import java.util.Properties;
-//See file pkErrCodes.properties
-public enum pkErrCode
+
+public enum pkErrCode // SEE file pkErrCodes.properties !!
 //To preserve errcode numbers, you should add to the bottom and NOT from the top!
 {   NULL_LOCATION
 	, SYNC_FAILED
@@ -45,7 +45,7 @@ pkErrCode() {
 }//cstr private pkErrCode()
 
 
-	
+
 private String toString;
 @Override
 public String toString() {

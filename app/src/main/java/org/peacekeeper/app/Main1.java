@@ -3,6 +3,7 @@ package org.peacekeeper.app;
 import android.Manifest.permission;
 import android.accounts.*;
 import android.app.*;
+import android.app.DownloadManager.Request;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -40,8 +41,8 @@ import static udinic.accounts_authenticator_example.authentication.AccountGenera
 public class Main1 extends Activity{
 //begin static
 static private final org.slf4j.Logger mLog = LoggerFactory.getLogger( Main1.class );
-static private final LoggerContext mLoggerContext = (LoggerContext) LoggerFactory
-		.getILoggerFactory();
+static private final LoggerContext mLoggerContext =
+		(LoggerContext) LoggerFactory.getILoggerFactory();
 static private final ContextInitializer mContextInitializer = new ContextInitializer(
 		mLoggerContext );
 
@@ -57,8 +58,10 @@ private boolean mInvalidate;
 
 @Override protected void onCreate( Bundle savedInstanceState ){
 	super.onCreate( savedInstanceState );
+	mLog.debug( "Main1.OnCreate");
 	SecurityGuard.initSecurity();
 	mUtility = pkUtility.getInstance( this );
+	mLog.debug( "Main1.OnCreate InitSecurity, mUtility" );
 
 	setContentView( R.layout.main );
 	mAccountManager = AccountManager.get( this );
@@ -102,7 +105,7 @@ private boolean mInvalidate;
 @Override protected void onStart(){
 	mLog.trace( "onStart():\t" );
 	super.onStart();
-
+	getPeaceKeeperStatus();
 	//SecurityGuard.listAlgorithms(null);
 	//new Get( URLGet.status ).submit();
 	//new Post( URLPost.registrations ).submit();
@@ -394,5 +397,14 @@ private void showMessage( final String msg ){
 	mLoggerContext.stop();//flush log
 }
 
+public String getPeaceKeeperStatus(){
+	LinkedRequest linkedRequest = new LinkedRequest( pkURL.status, null, null ){
+		@Override public JSONObject getRequest( final JSONObject response ){ return response; }
+	};
 
+	com.android.volley.Request debugRequest = linkedRequest.submit();
+	mLog.debug( debugRequest.toString() );
+	mLog.debug( linkedRequest.toString() );
+	return linkedRequest.toString();
+}
 }//Main1

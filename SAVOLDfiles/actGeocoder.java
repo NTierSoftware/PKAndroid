@@ -22,7 +22,6 @@ import com.google.android.gms.maps.model.Marker;
 import org.json.JSONObject;
 //import org.peacekeeper.rest.LinkedRequest;
 //import org.peacekeeper.rest.LinkedRequest.pkURL;
-import org.peacekeeper.rest.LinkedRequest;
 import org.peacekeeper.service.*;
 import org.peacekeeper.service.pkRequest.pkURL;
 import org.peacekeeper.util.pkUtility;
@@ -62,26 +61,19 @@ private RESTResultReceiver mRESTResultReceiver = new RESTResultReceiver( new Han
 private pkUtility mUtility;
 
 public String getPeaceKeeperStatus(){
-	LinkedRequest linkedRequest = new LinkedRequest( LinkedRequest.pkURL.status, null, null )
-	{
-		@Override public JSONObject getRequest( final JSONObject response ){
-			//mLog.debug( "getPeaceKeeperStatus:\t" + response.toString() );
-			return null;
-		}
+	startRESTService( pkURL.status );
+	return mRESTResultReceiver.toString();
 
-	};
+	//pkRequest linkedRequest = new pkRequest( pkURL.status, null, null );
 
+
+/*
 	com.android.volley.Request debugRequest = linkedRequest.submit();
 	mLog.debug( debugRequest.toString() );
 	mLog.debug( linkedRequest.toString() );
 	return linkedRequest.toString();
+*/
 }
-
-public void newPeaceKeeperStatus(){
-
-	startRESTService( pkRequest.pkURL.status );
-}
-
 
 
 
@@ -89,10 +81,7 @@ public void newPeaceKeeperStatus(){
 	super.onCreate( savedInstanceState );
 	mUtility = pkUtility.getInstance( this );
 	setContentView( R.layout.geocoder );
-
-	//getPeaceKeeperStatus();
-	newPeaceKeeperStatus();
-
+	getPeaceKeeperStatus();
 	getSupportActionBar().setTitle( R.string.RegisterYourLocn );
 	buildGoogleApiClient();
 	mapFrag = (SupportMapFragment) getSupportFragmentManager().findFragmentById( R.id.geocoder );
@@ -166,7 +155,7 @@ protected synchronized void buildGoogleApiClient(){
 //http://stackoverflow.com/questions/31328143/android-google-maps-onmapready-store-googlemap
 @Override public void onMapReady( GoogleMap googleMap ){
 	//Initialize Google Play Services
-	if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ){
+	if ( android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ){
 		if ( ContextCompat.checkSelfPermission( this,
 		                                        Manifest.permission.ACCESS_FINE_LOCATION )
 		     != PackageManager.PERMISSION_GRANTED ){
@@ -281,17 +270,16 @@ protected void startIntentService( final LatLng latLng ){
 	            );
 }//startIntentService()
 
-protected void startRESTService( final pkRequest.pkURL aURL ){
+protected void startRESTService( final pkURL aURL ){
 	// Start the service. If the service isn't already running, it is instantiated and started
 	// (creating a process for it if needed); if it is running then it remains running. The
 	// service kills itself automatically once all intents are processed.
-
 	startService(
 			new Intent( this, RESTIntentService.class )
 					.putExtra( RESTIntentService.RECEIVER, mRESTResultReceiver )
-					.putExtra( RESTIntentService.REQUEST, aURL.name() )
+					.putExtra( RESTIntentService.REQUEST, aURL )
 	            );
-}//startRESTService()
+}//startIntentService()
 
 
 
@@ -301,7 +289,7 @@ class AddressResultReceiver extends ResultReceiver{
 
 	//Receives data sent from FetchAddressIntentService and updates the UI in MainActivity.
 	@Override protected void onReceiveResult( int resultCode, Bundle resultData ){
-		mMarker.setSnippet( resultData.getString( FetchAddressIntentService.LOCATION ) );
+		//mMarker.setSnippet( resultData.getString( FetchAddressIntentService.LOCATION ) );
 		mMarker.showInfoWindow();
 	}//onReceiveResult
 }//class AddressResultReceiver
@@ -312,10 +300,9 @@ class RESTResultReceiver extends ResultReceiver{
 
 	//Receives data sent from RESTIntentService and updates the UI in MainActivity.
 	@Override protected void onReceiveResult( int resultCode, Bundle resultData ){
-		String snippet = resultData.getString( RESTIntentService.JSONResult );
-		mLog.debug( "RESTResultReceiver:\t" + snippet );
-		//mMarker.setSnippet( snippet );
-		//mMarker.showInfoWindow();
+
+		mMarker.setSnippet( resultData.getString( RESTIntentService.JSONResult ) );
+		mMarker.showInfoWindow();
 	}//onReceiveResult
 }//class RESTResultReceiver
 

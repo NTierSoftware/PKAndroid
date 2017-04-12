@@ -43,9 +43,6 @@ private pkUtility mUtility;
 	case R.id.action_settings:
 		break;
 /*
-		case R.id.action_email:
-			mGAELUtility.sendEmail();
-			break;
 		case R.id.action_test:
 			Test();
 			break;
@@ -63,12 +60,13 @@ private pkUtility mUtility;
 	super.onCreate( savedInstanceState );
 	mLog.trace( "OnCreate:\t" );
 	SecurityGuard.initSecurity();
-	//mUtility = pkUtility.getInstance(this);
 
+/*
 	OneSignal.startInit( this )
 	         //.setNotificationOpenedHandler( new pkNotificationOpenedHandler() )
 	         .setNotificationReceivedHandler( new pkNotificationReceivedHandler() )
 	         .init();
+*/
 
 	setContentView( R.layout.activity_main );
 	Toolbar toolbar = (Toolbar) findViewById( R.id.toolbar );
@@ -124,33 +122,6 @@ private pkUtility mUtility;
 	mUtility.close();
 }
 
-
-// This fires when a OneSignal notification is opened by tapping on it or one is received while the app is runnning.
-private class pkNotificationOpenedHandler implements NotificationOpenedHandler{
-	@Override
-	public void notificationOpened(OSNotificationOpenResult openedResult ) {
-		OSNotification notification = openedResult.notification;
-		JSONObject data = notification.payload.additionalData;
-		OSNotificationAction.ActionType actionType = openedResult.action.type;
-
-		if (actionType == OSNotificationAction.ActionType.ActionTaken)
-			mLog.info("OneSignalExample", "Button pressed with id: " + openedResult.action.actionID);
-
-		mLog.debug( "notification", notification.toJSONObject() );
-
-		if (data != null){
-			mLog.debug( "OneSignalExample", "Full additionalData:\n" + data.toString() );
-		}
-	}
-}//pkNotificationOpenedHandler
-
-
-private class pkNotificationReceivedHandler implements OneSignal.NotificationReceivedHandler{
-	@Override public void notificationReceived( OSNotification notification ){
-		mLog.debug( "notification", "notificationReceived" );
-		mLog.debug( "notification", notification.toJSONObject() );
-	}
-}//pkNotificationReceivedHandler
 
 }//MainActivity
 

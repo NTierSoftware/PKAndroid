@@ -42,14 +42,16 @@ see files
 
     <string name="no_address_found">Sorry, no address found</string>
     <string name="no_location_data_provided">No location data provided</string>
+    <string name="no_pkRequest_provided">No REST request provided</string>
     <string name="service_not_available">Sorry, the service is not available</string>
     <string name="invalid_lat_long_used">Invalid latitude or longitude used</string>
+    <string name="failed_future_request">Failed future request</string>
 
     <!--    Permissions    -->
-    <string name="permission_rationale_location">Access to the location service is required to demonstrate the \'my location\' feature, which shows your current location on the map.</string>
-    <string name="location_permission_denied">PeaceKeeper requires location permission to enable the \'my location\' layer. Please try again and grant access to use the location.\nIf the permission has been permanently denied, it can be enabled from the System Settings &gt; Apps &gt; \'Google Maps API Demos\'.</string>
-    <string name="permission_required_toast">Location permission is required for this demo.</string>
-<!--    <string name="my_location_demo_label">My Location Demo</string>-->
+    <string name="permission_rationale_location">Access to the location service is required.</string>
+    <string name="location_permission_denied">PeaceKeeper requires location permission to Register. Please try again and grant access to use the location.\nIf the permission has been permanently denied, it can be enabled from the System Settings &gt; Apps &gt; \'Google Maps API Demos\'.</string>
+    <string name="permission_required_toast">Location permission is required.</string>
+    <!--    <string name="my_location_demo_label">My Location Demo</string>-->
     <string name="RegisterYourLocn">Long tap your Registration location</string>
     <string name="GoogleApiClientConnFailed">FAILED to connect to Google api!</string>
 

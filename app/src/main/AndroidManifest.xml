@@ -54,6 +54,16 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key"/>
 
+        <activity android:name=".MainEntryAct">
+            android:launchMode="singleInstance"
+            android:noHistory="true" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
         <!--
                 <activity
                     android:name=".Main1"
@@ -69,13 +79,14 @@
         <!-- <activity android:name=".actRegistration"> -->
         <activity android:name=".actGeocoder">
             android:label="@string/RegisterYourLocn"
+<!--
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+-->
         </activity>
-       <!-- <activity android:name=".MyLocationDemoActivity"/>-->
+        <!-- <activity android:name=".MyLocationDemoActivity"/> -->
         <!-- android:label="@string/my_location_demo_label" -->
 
 
@@ -102,6 +113,15 @@
             android:label="Registration"/>
 
         <!--
+Service to send REST request to the Peacekeeper Webserver. Setting the
+android:exported attribute to "false" stops other apps from starting this
+service, even when using an explicit intent.
+-->
+        <service
+            android:name="org.peacekeeper.service.RESTIntentService"
+            android:exported="false"/>
+
+        <!--
 Service to asynchronously fetch a location address using a Geocoder. Setting the
 android:exported attribute to "false" stops other apps from starting this
 service, even when using an explicit intent.
@@ -109,6 +129,8 @@ service, even when using an explicit intent.
         <service
             android:name="org.peacekeeper.service.FetchAddressIntentService"
             android:exported="false"/>
+
+
 
     </application>
 
