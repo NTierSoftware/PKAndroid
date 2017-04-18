@@ -1,4 +1,12 @@
 //http://stackoverflow.com/questions/34582370/how-can-i-show-current-location-on-a-google-map-on-android-marshmallow/34582595#34582595
+
+/**
+ Getting the Location Address.
+
+ Demonstrates how to use the {@link android.location.Geocoder} API and reverse geocoding to
+ display a device's location as an address. Uses an IntentService to fetch the location address,
+ and a ResultReceiver to process results sent by the IntentService.
+*/
 package org.peacekeeper.app;
 
 import android.Manifest;
@@ -22,9 +30,9 @@ import com.google.android.gms.maps.model.Marker;
 import org.json.JSONObject;
 //import org.peacekeeper.rest.LinkedRequest;
 //import org.peacekeeper.rest.LinkedRequest.pkURL;
+import org.peacekeeper.crypto.SecurityGuard;
 import org.peacekeeper.rest.LinkedRequest;
 import org.peacekeeper.service.*;
-import org.peacekeeper.service.pkRequest.pkURL;
 import org.peacekeeper.util.pkUtility;
 import org.slf4j.*;
 
@@ -78,7 +86,6 @@ public String getPeaceKeeperStatus(){
 }
 
 public void newPeaceKeeperStatus(){
-
 	startRESTService( pkRequest.pkURL.status );
 }
 
@@ -88,10 +95,12 @@ public void newPeaceKeeperStatus(){
 @Override protected void onCreate( Bundle savedInstanceState ){
 	super.onCreate( savedInstanceState );
 	mUtility = pkUtility.getInstance( this );
+	SecurityGuard.initSecurity();
+
+	newPeaceKeeperStatus();
 	setContentView( R.layout.geocoder );
 
 	//getPeaceKeeperStatus();
-	newPeaceKeeperStatus();
 
 	getSupportActionBar().setTitle( R.string.RegisterYourLocn );
 	buildGoogleApiClient();
@@ -141,7 +150,7 @@ public void newPeaceKeeperStatus(){
 			     == PackageManager.PERMISSION_GRANTED ){
 
 				if ( mGoogleApiClient == null ){ buildGoogleApiClient(); }
-				mGoogleMap.setMyLocationEnabled( true );
+				//mGoogleMap.setMyLocationEnabled( true );
 			}
 
 		}
@@ -178,11 +187,11 @@ protected synchronized void buildGoogleApiClient(){
 	}
 
 	mGoogleMap = googleMap;
-	mGoogleMap.setMapType( GoogleMap.MAP_TYPE_NORMAL );
+	//mGoogleMap.setMapType( GoogleMap.MAP_TYPE_NORMAL );
 
 	mGoogleMap.setOnMapLongClickListener( this );
 	mGoogleMap.setOnMarkerClickListener(this);
-
+	mGoogleMap.setMyLocationEnabled( true );
 	mMarkerOptions = new MarkerOptions()
 			.title( "Tap this marker again to register your location" )
 			.icon( BitmapDescriptorFactory.defaultMarker( BitmapDescriptorFactory.HUE_MAGENTA) );
@@ -250,7 +259,7 @@ private final static float ZOOM = 18;
 
 
 @Override public void onMapLongClick( final LatLng latLng ){
-	startIntentService( latLng );
+	startGeocodeService( latLng );
 
 	if ( mMarker != null ) mMarker.remove();
 
@@ -264,13 +273,12 @@ private final static float ZOOM = 18;
 					.putExtra( FetchAddressIntentService.LOCATION, marker.getSnippet() )
 					.putExtra( FetchAddressIntentService.LATLNG, marker.getPosition() )
 
-
 	             );
 	return true;
 }//onMarkerClick
 
 
-protected void startIntentService( final LatLng latLng ){
+protected void startGeocodeService( final LatLng latLng ){
 	// Start the service. If the service isn't already running, it is instantiated and started
 	// (creating a process for it if needed); if it is running then it remains running. The
 	// service kills itself automatically once all intents are processed.
@@ -279,7 +287,7 @@ protected void startIntentService( final LatLng latLng ){
 					.putExtra( FetchAddressIntentService.RECEIVER, mResultReceiver )
 					.putExtra( FetchAddressIntentService.LATLNG, latLng )
 	            );
-}//startIntentService()
+}//startGeocodeService()
 
 protected void startRESTService( final pkRequest.pkURL aURL ){
 	// Start the service. If the service isn't already running, it is instantiated and started

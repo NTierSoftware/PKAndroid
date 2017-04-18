@@ -82,4 +82,6 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.0-beta4'
 
     compile 'com.google.android.gms:play-services-maps:+'
+// for class GeoJsonPoint  https://developers.google.com/maps/documentation/android-api/utility/setup
+    compile 'com.google.maps.android:android-maps-utils:+'
 }

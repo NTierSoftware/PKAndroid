@@ -21,10 +21,6 @@ package org.peacekeeper.crypto;
 
 
 
-import com.google.android.gms.maps.model.LatLng;
-import com.google.maps.android.data.Point;
-import com.google.maps.android.data.geojson.GeoJsonPoint;
-
 import org.json.*;
 import org.peacekeeper.exception.*;
 import org.peacekeeper.util.pkUtility;
@@ -86,7 +82,6 @@ static private KeyPair mKEYPAIR = null;
 static private KeyStore mKEYSTORE = null;
 //static private byte[] hash = null;
 static private final int nonceLen = 32;
-static private final pkUtility mUtility = pkUtility.getInstance();
 
 //end static
 //private String message = null;
@@ -627,80 +622,46 @@ static private boolean unRegister(){//purges mKEYSTORE
 return unRegister;
 }//unRegister()
 
-static public JSONObject getRegistration(JSONObject registration){
-	PKCS10CertificationRequest CSR = genCSR();
-	mLog.debug( toPEM( CSR ) );
-
-	//JSONObject registration = new JSONObject();
-	try{
-		String CSRstr = Base64.toBase64String( CSR.getEncoded() );
-
-		registration.put( "accepted", false )
-		            .put( "csr", CSRstr )
-		            //.put( "location", getLocation() )
-		            //.put( "location", new Point( new LatLng( 35.850607,-76.734215) ) )
-		            .put( "pushId" , "JDbogus-4" )
-//		            .put( "deviceId", mUtility.getUniqDeviceID().toString() )
-		            .put( "deviceId", "58ee6c757da4b0000cf824e5" )
-		            .put( "deviceCertificate", "" )
-		            .put( "deviceOSType", "Android" )
-		            .put( "deviceOSVersion", mUtility.getVersion().toString() )
-		            //.put( "keeperId", "" )
-		            .put( "receivedCode", "" )
-		            .put( "referredBy", "JDtest@boosh.com" );
-
-	}catch ( IOException | JSONException X ){
-		mLog.error( X.getMessage() );
-		registration = pkUtility.errJSONObject;
-	}
-
-	mLog.debug( "\nPOST :\t" + registration.toString() );
-	return registration;
-}//getRegistration
-
-
 /*
-static private JSONObject getLocation(){//BOGUS
-//	{ "type": "Point", "coordinates": [ 35.850607,-76.734215 ] }
-	JSONObject location = new JSONObject();
-	JSONArray coords = new JSONArray();
-	try{
-		coords.put( 35.850607  )
-		      .put( 76.734215  );
-		location
-			.put("type", "Point")
-			.put( "coordinates", coords);
+private byte[] getSignature(){
+	if ( signature == null )
+		try{
+			KeyPair keyPair = getKeyPair();
+			Signature ecdsaSign = Signature.getInstance( SHA256withECDSA );
 
-	}catch ( JSONException aE ){ aE.printStackTrace(); }
+			ecdsaSign.initSign( keyPair.getPrivate() );
+			ecdsaSign.update( message.getBytes( charset ) );
+			signature = ecdsaSign.sign();
+		}catch ( NoSuchAlgorithmException | InvalidKeyException | SignatureException | UnsupportedEncodingException X ){
+			X.printStackTrace();
+			pkException CRYPTOERR = new pkException( pkErrCode.CRYPTO ).set( "Crypto Signature err",
+			                                                                 X );
+			mLog.error( CRYPTOERR.toString() );
+			signature = null;
+			throw CRYPTOERR;
+		}//catch
 
-return location;
-}
+	return signature;
+}//getSignature
 */
 
 /*
-static private JSONObject getLocation(){//BOGUS
-//	{ "type": "Point", "coordinates": [ 35.850607,-76.734215 ] }
-	JSONObject location = new JSONObject();
-	//JSONArray coords = new JSONArray();
-	GeoJsonPoint point = new GeoJsonPoint( new LatLng( 35.850607,-76.734215));
-	Point point1 = new Point( new LatLng( 35.850607,-76.734215) );
-	JSONObject loc = new JSONObject();
-	try{
-/*
-		coords.put( 35.850607  )
-		      .put( 76.734215  );
-*//*
+//http://stackoverflow.com/questions/415953/how-can-i-generate-an-md5-hash/23273249#23273249
+@Override
+public String toString(){
+	if ( this.hash == null ) return null;
 
-		location
-				//.put("type", "Point")
-				.put( "coordinates", point);
-//			.put( "coordinates", coords);
-		//loc.put( point1 )
+	String hashStr = new BigInteger( 1, this.hash ).toString( 16 );
 
-	}catch ( JSONException aE ){ aE.printStackTrace(); }
+// Now we need to zero pad it if you actually want the full 32 chars.
+	while ( hashStr.length() < 32 ){ hashStr = "0" + hashStr; }
 
-	return location;
-	//return new GeoJsonPoint( new LatLng( 35.850607,-76.734215));
+
+	StringBuilder retVal = new StringBuilder( "SecurityGuard:\t" )
+			.append( this.message )
+			.append( "\tHash: " ).append( hashStr );
+
+	return retVal.toString();
 }
 */
 
@@ -916,47 +877,4 @@ public boolean verify(){
 
 	return verify;
 }//verify
-*/
-
-/*
-private byte[] getSignature(){
-	if ( signature == null )
-		try{
-			KeyPair keyPair = getKeyPair();
-			Signature ecdsaSign = Signature.getInstance( SHA256withECDSA );
-
-			ecdsaSign.initSign( keyPair.getPrivate() );
-			ecdsaSign.update( message.getBytes( charset ) );
-			signature = ecdsaSign.sign();
-		}catch ( NoSuchAlgorithmException | InvalidKeyException | SignatureException | UnsupportedEncodingException X ){
-			X.printStackTrace();
-			pkException CRYPTOERR = new pkException( pkErrCode.CRYPTO ).set( "Crypto Signature err",
-			                                                                 X );
-			mLog.error( CRYPTOERR.toString() );
-			signature = null;
-			throw CRYPTOERR;
-		}//catch
-
-	return signature;
-}//getSignature
-*/
-
-/*
-//http://stackoverflow.com/questions/415953/how-can-i-generate-an-md5-hash/23273249#23273249
-@Override
-public String toString(){
-	if ( this.hash == null ) return null;
-
-	String hashStr = new BigInteger( 1, this.hash ).toString( 16 );
-
-// Now we need to zero pad it if you actually want the full 32 chars.
-	while ( hashStr.length() < 32 ){ hashStr = "0" + hashStr; }
-
-
-	StringBuilder retVal = new StringBuilder( "SecurityGuard:\t" )
-			.append( this.message )
-			.append( "\tHash: " ).append( hashStr );
-
-	return retVal.toString();
-}
 */

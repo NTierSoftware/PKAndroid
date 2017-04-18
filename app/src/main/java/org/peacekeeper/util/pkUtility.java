@@ -12,6 +12,7 @@ import android.net.*;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.widget.Toast;
 
 import com.android.volley.*;
 import com.android.volley.Network;
@@ -365,6 +366,12 @@ public boolean isDeviceRegisteredToPeaceKeeper(){
 //check storage
 	return false;
 }
+
+//Shows a toast with the given text.
+public void debugToast( String debug ){
+	mLog.debug( debug );
+	Toast.makeText( this, debug, Toast.LENGTH_SHORT ).show(); }
+
 /*
 public void sendEmail(){
 	// http://stackoverflow.com/questions/8284706/send-email-via-gmail

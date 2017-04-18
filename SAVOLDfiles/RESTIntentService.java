@@ -10,7 +10,9 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.os.*;
 
-import org.json.*;
+import com.android.volley.RequestQueue;
+
+import org.json.JSONObject;
 import org.peacekeeper.app.R;
 import org.peacekeeper.service.pkRequest.pkURL;
 import org.peacekeeper.util.*;
@@ -27,12 +29,10 @@ import java.util.concurrent.*;
 public class RESTIntentService extends IntentService{
 //begin static
 //Intent putextra ID's
-static public final String
-		RECEIVER    = "RESTIntentServiceRCVR",
-		REQUEST     = "RESTIntentServiceRequest",
-		JSONRequest = "JSONRequest",
-		JSONResult  = "JSONResult"
-;
+static public final String //LATLNG = "LTLN",
+		RECEIVER   = "RESTIntentServiceRCVR",
+		JSONResult = "JSONResult",
+		REQUEST    = "RESTIntentServiceRequest";
 protected final static pkUtility    mUtility      = pkUtility.getInstance();
 //protected final static RequestQueue mRequestQueue = mUtility.getRequestQueue();
 //protected final static Toast mToast = Toast.makeText( mUtility.getBaseContext(), "", Toast.LENGTH_LONG );
@@ -68,12 +68,6 @@ public RESTIntentService(){ super( "RESTIntentService" ); }
 
 	// Get the pkRequest passed to this service through an extra.
 	pkRequest.pkURL URL = pkURL.valueOf( intent.getStringExtra( REQUEST ) );
-
-	JSONObject requestBody = null;
-	try{ requestBody = new JSONObject(intent.getStringExtra( JSONRequest )); }
-	catch ( JSONException aE ){ aE.printStackTrace(); }
-
-
 	mLog.debug( "RESTIntentService URL: " + URL.toString() );
 	// Make sure that the location data was really sent over through an extra. If it wasn't,
 	// send an error message and return.
@@ -88,12 +82,8 @@ public RESTIntentService(){ super( "RESTIntentService" ); }
 	//Request retval = null;
 	JSONObject response = null;
 //	try{
-		pkRequest request = new pkRequest( URL );
-	//Testing reg
-//	request = new pkRequest( pkURL.registrations, SecurityGuard.getRegistration( requestBody )  );
-	request = new pkRequest( pkURL.registrations, requestBody  );
-
-		mLog.debug( "onHandleIntent:\n" + request.toString() );
+	pkRequest request = new pkRequest( URL );
+	mLog.debug( "onHandleIntent:\n" + request.toString() );
 
 	request.submit();
 
@@ -102,7 +92,16 @@ public RESTIntentService(){ super( "RESTIntentService" ); }
 		// TODO THIS BLOCKS the service but not the main UI thread. Consider wrapping in an asynch task:
 		// see http://stackoverflow.com/questions/30549268/android-volley-timeout-exception-when-using-requestfuture-get
 		response = request.mFuture.get( TIMEOUT, TimeUnit.SECONDS );
+		//response = request.mFuture.get(  );
 		mLog.debug( "onHandleIntent:\n" + response.toString() );
+
+/*
+	} catch (InterruptedException |ExecutionException x) {
+		errorMessage = getString( R.string.failed_future_request );
+		mLog.error( errorMessage , x );
+		x.printStackTrace();
+	}
+*/
 
 	}catch ( InterruptedException | ExecutionException | TimeoutException x ){
 		errorMessage = getString( R.string.failed_future_request );
@@ -124,6 +123,4 @@ private void deliverResultToReceiver( int resultCode, String message ){
 	bundle.putString( JSONResult, message );
 	mReceiver.send( resultCode, bundle );
 }
-
-
 }//class RESTIntentService
