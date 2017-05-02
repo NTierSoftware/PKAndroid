@@ -69,6 +69,7 @@ private AddressResultReceiver mResultReceiver = new AddressResultReceiver( new H
 private RESTResultReceiver mRESTResultReceiver = new RESTResultReceiver( new Handler() );
 private pkUtility mUtility;
 
+/*
 public String getPeaceKeeperStatus(){
 	LinkedRequest linkedRequest = new LinkedRequest( LinkedRequest.pkURL.status, null, null )
 	{
@@ -84,24 +85,28 @@ public String getPeaceKeeperStatus(){
 	mLog.debug( linkedRequest.toString() );
 	return linkedRequest.toString();
 }
+*/
 
+/*
 public void newPeaceKeeperStatus(){
-	startRESTService( pkRequest.pkURL.status );
+	mUtility.Test();
+	//startRESTService( pkRequest.pkURL.status );
 }
+*/
 
 
 
 
 @Override protected void onCreate( Bundle savedInstanceState ){
 	super.onCreate( savedInstanceState );
+	mLog.debug("OnCreate");
 	mUtility = pkUtility.getInstance( this );
 	SecurityGuard.initSecurity();
-
-	newPeaceKeeperStatus();
+//	newPeaceKeeperStatus();
 	setContentView( R.layout.geocoder );
 
 	//getPeaceKeeperStatus();
-
+	//mUtility.Test();
 	getSupportActionBar().setTitle( R.string.RegisterYourLocn );
 	buildGoogleApiClient();
 	mapFrag = (SupportMapFragment) getSupportFragmentManager().findFragmentById( R.id.geocoder );
@@ -111,7 +116,10 @@ public void newPeaceKeeperStatus(){
 
 @Override public void onResume(){
 	super.onResume();
+	mLog.debug("onResume");
+
 	mGoogleApiClient.connect();
+//	mUtility.Test();
 }
 
 
@@ -127,7 +135,7 @@ public void newPeaceKeeperStatus(){
 
 @Override protected void onStop(){
 	mGoogleApiClient.disconnect();
-	mLoggerContext.stop();//flush log
+	//mLoggerContext.stop();//flush log
 	super.onStop();
 }
 
@@ -138,6 +146,8 @@ public void newPeaceKeeperStatus(){
 }
 
 @Override public void onRequestPermissionsResult( int requestCode, String permissions[], int[] grantResults ){
+	mLog.debug("onRequestPermissionsResult");
+
 	switch ( requestCode ){
 	case MY_PERMISSIONS_REQUEST_LOCATION:{
 		// If request is cancelled, the result arrays are empty.
@@ -187,15 +197,16 @@ protected synchronized void buildGoogleApiClient(){
 	}
 
 	mGoogleMap = googleMap;
-	//mGoogleMap.setMapType( GoogleMap.MAP_TYPE_NORMAL );
-
+	mGoogleMap.setMyLocationEnabled( true );
 	mGoogleMap.setOnMapLongClickListener( this );
 	mGoogleMap.setOnMarkerClickListener(this);
-	mGoogleMap.setMyLocationEnabled( true );
 	mMarkerOptions = new MarkerOptions()
 			.title( "Tap this marker again to register your location" )
 			.icon( BitmapDescriptorFactory.defaultMarker( BitmapDescriptorFactory.HUE_MAGENTA) );
-}
+
+
+
+}//onMapReady()
 
 
 
@@ -259,7 +270,9 @@ private final static float ZOOM = 18;
 
 
 @Override public void onMapLongClick( final LatLng latLng ){
+	mLog.debug( "onMapLongClick" );
 	startGeocodeService( latLng );
+	mLog.debug( "startGeocodeService STARTED" );
 
 	if ( mMarker != null ) mMarker.remove();
 
@@ -268,6 +281,7 @@ private final static float ZOOM = 18;
 }//onMapLongClick
 
 @Override public boolean onMarkerClick( Marker marker) {
+	mLog.debug( "onMarkerClick" );
 	startActivity(
 			new Intent(this, actRegistration.class)
 					.putExtra( FetchAddressIntentService.LOCATION, marker.getSnippet() )
@@ -279,6 +293,7 @@ private final static float ZOOM = 18;
 
 
 protected void startGeocodeService( final LatLng latLng ){
+	mLog.debug( "startGeocodeService" );
 	// Start the service. If the service isn't already running, it is instantiated and started
 	// (creating a process for it if needed); if it is running then it remains running. The
 	// service kills itself automatically once all intents are processed.
@@ -289,6 +304,7 @@ protected void startGeocodeService( final LatLng latLng ){
 	            );
 }//startGeocodeService()
 
+/*
 protected void startRESTService( final pkRequest.pkURL aURL ){
 	// Start the service. If the service isn't already running, it is instantiated and started
 	// (creating a process for it if needed); if it is running then it remains running. The
@@ -300,6 +316,7 @@ protected void startRESTService( final pkRequest.pkURL aURL ){
 					.putExtra( RESTIntentService.REQUEST, aURL.name() )
 	            );
 }//startRESTService()
+*/
 
 
 
@@ -333,5 +350,7 @@ class RESTResultReceiver extends ResultReceiver{
 	mLog.error( R.string.GoogleApiClientConnFailed + ":\t" + connectionResult.getErrorMessage() );
 	Toast.makeText(this, R.string.GoogleApiClientConnFailed, Toast.LENGTH_LONG).show();
 }
+
+
 }//class actGeocoder
 

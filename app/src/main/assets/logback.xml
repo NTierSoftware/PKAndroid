@@ -1,5 +1,5 @@
 <configuration debug="true">
-    
+
   <!-- Create a tab delimited file appender for a log in the application's data directory -->
 <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${DATA_DIR}/logs/PeaceKeeper.log</file>
@@ -12,26 +12,27 @@
     <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
       <maxFileSize>100KB</maxFileSize>
     </triggeringPolicy>
-    
+
     <encoder>
       <pattern>%d{yy.MM.dd HH:mm:ss.SSS}:\t[%thread]:\t%level:\t%logger: \t%msg%n</pattern>
       <outputPatternAsHeader>true</outputPatternAsHeader>
-      <immediateFlush>false</immediateFlush>
-      
-    </encoder>  
+        <immediateFlush>false</immediateFlush>
+
+    </encoder>
   </appender>
 
 
   <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
     <appender-ref ref="FILE" />
   </appender>
-   
- 
-  
+
+
+
   <!-- Create a logcat appender -->
   <appender name="logcat" class="ch.qos.logback.classic.android.LogcatAppender">
     <encoder>
       <pattern>%d{HH:mm:ss.SSS yy.MM.dd}\t[%thread]\t%-5level\t%logger{36} - %msg%n</pattern>
+        <immediateFlush>false</immediateFlush>
     </encoder>
   </appender>
 

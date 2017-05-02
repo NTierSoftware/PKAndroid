@@ -10,13 +10,20 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.os.*;
 
+import com.android.volley.ServerError;
+
 import org.json.*;
-import org.peacekeeper.app.R;
+import org.peacekeeper.app.*;
+import org.peacekeeper.crypto.SecurityGuard;
 import org.peacekeeper.service.pkRequest.pkURL;
 import org.peacekeeper.util.*;
 import org.slf4j.*;
 
+import java.util.IllegalFormatCodePointException;
 import java.util.concurrent.*;
+
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.util.ContextInitializer;
 
 
 /**
@@ -31,30 +38,36 @@ static public final String
 		RECEIVER    = "RESTIntentServiceRCVR",
 		REQUEST     = "RESTIntentServiceRequest",
 		JSONRequest = "JSONRequest",
-		JSONResult  = "JSONResult"
+		JSONResult  = "ResultJSON"
 ;
 protected final static pkUtility    mUtility      = pkUtility.getInstance();
 //protected final static RequestQueue mRequestQueue = mUtility.getRequestQueue();
 //protected final static Toast mToast = Toast.makeText( mUtility.getBaseContext(), "", Toast.LENGTH_LONG );
 private final static   long         TIMEOUT       = 5;
 
+
+/*
+private static final LoggerContext      mLoggerContext      =
+		(LoggerContext) LoggerFactory.getILoggerFactory();
+private static final ContextInitializer mContextInitializer =
+		new ContextInitializer( mLoggerContext );
+private static final Logger             mLog     = LoggerFactory.getLogger( RESTIntentService.class );
+*/
+
+private final LoggerContext      mLoggerContext      =
+		(LoggerContext) LoggerFactory.getILoggerFactory();
+private  final ContextInitializer mContextInitializer =
+		new ContextInitializer( mLoggerContext );
+private  final Logger             mLog     = LoggerFactory.getLogger( RESTIntentService.class );
+
+
 //end static
-private static final Logger mLog = LoggerFactory.getLogger( RESTIntentService.class );
 //The receiver where results are forwarded from this service.
 private ResultReceiver mReceiver;
 
 //This constructor is required, and calls the super IntentService(String) constructor with the name for a worker thread.
 public RESTIntentService(){ super( "RESTIntentService" ); }
 
-/**
- Tries to get the location address using a Geocoder. If successful, sends an address to a
- result receiver. If unsuccessful, sends an error message instead.
- Note: We define a {@link android.os.ResultReceiver} in * MainActivity to process content
- sent from this service.
-
- This service calls this method from the default worker thread with the intent that started
- the service. When this method returns, the service automatically stops.
- */
 @Override protected void onHandleIntent( Intent intent ){
 	String errorMessage = "";
 
@@ -70,11 +83,15 @@ public RESTIntentService(){ super( "RESTIntentService" ); }
 	pkRequest.pkURL URL = pkURL.valueOf( intent.getStringExtra( REQUEST ) );
 
 	JSONObject requestBody = null;
-	try{ requestBody = new JSONObject(intent.getStringExtra( JSONRequest )); }
-	catch ( JSONException aE ){ aE.printStackTrace(); }
+	String aJSONRequest = intent.getStringExtra( JSONRequest );
+	if (aJSONRequest != null){
+		try{ requestBody = new JSONObject( aJSONRequest );
+		}catch ( JSONException aE ){ aE.printStackTrace(); }
+	}
 
 
 	mLog.debug( "RESTIntentService URL: " + URL.toString() );
+
 	// Make sure that the location data was really sent over through an extra. If it wasn't,
 	// send an error message and return.
 	if ( URL == null ){
@@ -85,35 +102,51 @@ public RESTIntentService(){ super( "RESTIntentService" ); }
 	}
 
 
-	//Request retval = null;
 	JSONObject response = null;
-//	try{
-		pkRequest request = new pkRequest( URL );
-	//Testing reg
-//	request = new pkRequest( pkURL.registrations, SecurityGuard.getRegistration( requestBody )  );
-	request = new pkRequest( pkURL.registrations, requestBody  );
+	//pkRequest request = new pkRequest( URL );
+	pkRequest request = new pkRequest( URL, requestBody );
 
-		mLog.debug( "onHandleIntent:\n" + request.toString() );
-
+	if (requestBody != null){
+		mLog.debug( "requestBody:\t" + requestBody.toString() );
+		mUtility.debugToast( "requestBody:\t" + requestBody.toString() );
+	}
 	request.submit();
 
 	try{
-		//while (!request.mFuture.isDone());
 		// TODO THIS BLOCKS the service but not the main UI thread. Consider wrapping in an asynch task:
 		// see http://stackoverflow.com/questions/30549268/android-volley-timeout-exception-when-using-requestfuture-get
+		while (!request.mFuture.isDone()) ;//mLog.debug( "future not done!" );
+
 		response = request.mFuture.get( TIMEOUT, TimeUnit.SECONDS );
 		mLog.debug( "onHandleIntent:\n" + response.toString() );
+		if (URL == pkURL.registrations){
+			String id = response.getString( "_id" );
+			pkURL registrations2 = pkURL.registrations2.addToURL( id );
 
-	}catch ( InterruptedException | ExecutionException | TimeoutException x ){
-		errorMessage = getString( R.string.failed_future_request );
+			requestBody = new JSONObject().put( "receivedCode", "12345678" );
+
+			pkRequest reg2 = new pkRequest( registrations2, requestBody );
+			reg2.submit();
+			while (!reg2.mFuture.isDone()) ;//mLog.debug( "future not done!" );
+
+			response = request.mFuture.get( TIMEOUT, TimeUnit.SECONDS );
+		}
+
+	}catch ( InterruptedException | ExecutionException | TimeoutException  x ){
+		mLog.debug( "requestBody:\t" + ((requestBody != null) ? requestBody.toString() :"NULL") );
+		errorMessage = x.toString();
+		mLog.error( errorMessage, x );
+		x.printStackTrace();
+	}catch ( JSONException x ){
+		mLog.debug( "requestBody:\t" + ((requestBody != null) ? requestBody.toString() :"NULL") );
+		errorMessage = x.toString() + ": BAD ID";
 		mLog.error( errorMessage, x );
 		x.printStackTrace();
 	}
 
 
 	if ( errorMessage.isEmpty() ){
-		deliverResultToReceiver( Constants.SUCCESS_RESULT,
-		                         response.toString() );
+		deliverResultToReceiver( Constants.SUCCESS_RESULT, response.toString() );
 	}
 	else{ deliverResultToReceiver( Constants.FAILURE_RESULT, errorMessage ); }
 }//onHandleIntent()
@@ -125,5 +158,11 @@ private void deliverResultToReceiver( int resultCode, String message ){
 	mReceiver.send( resultCode, bundle );
 }
 
+
+@Override public void onDestroy() {
+	mLog.trace( "onDestroy():\t" );
+	mLoggerContext.stop();//flush log
+	super.onDestroy();
+}
 
 }//class RESTIntentService

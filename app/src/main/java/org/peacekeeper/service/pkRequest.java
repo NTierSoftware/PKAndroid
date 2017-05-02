@@ -12,7 +12,7 @@ import com.android.volley.Request.*;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.toolbox.*;
 
-import org.json.JSONObject;
+import org.json.*;
 import org.peacekeeper.util.pkUtility;
 
 import java.net.*;
@@ -25,9 +25,15 @@ public class pkRequest{
 //abstract public JSONObject getRequest( final JSONObject response );
 
 public pkURL mPkURL;
-protected final static pkUtility    mUtility      = pkUtility.getInstance();
-protected final static RequestQueue mRequestQueue = mUtility.getRequestQueue();
+//protected final static pkUtility    mUtility      = pkUtility.getInstance();
+//protected final pkUtility    mUtility      = pkUtility.getInstance();
+protected final static RequestQueue mRequestQueue = pkUtility.getInstance().getRequestQueue();
 protected static org.slf4j.Logger mLog;
+
+private static final String                    URLhead  = "http://173.17.175.92:82/"; //TODO make this HTTPS
+private static HashMap< String, String > mHeaders = newHeader()
+										, registrations2Hdr = newHeader();
+//end static
 protected final ErrorListener                   mErrLsnr  = new ErrorListener(){
 	@Override public void onErrorResponse( VolleyError error ){
 		mLog.error( "Error!:\t" + error.getMessage() );
@@ -42,43 +48,21 @@ protected final ErrorListener                   mErrLsnr  = new ErrorListener(){
 //each enum needs priority and method, url, request, response, errlsnr
 protected       Response.Listener< JSONObject > mJsonResp = new Response.Listener< JSONObject >(){
 	@Override public void onResponse( JSONObject response ){
-		String respStr = "response:\t" + ( ( response == null ) ? "NULL" : response.toString() );
-		mLog.debug( "onResponse\t url:\t" + mPkURL.toString() + "\t:Response:\t" + respStr );
-		//mLog.debug(  "Response:\t" + respStr );
-
-		//nextRequest( response );
+		String respStr = ( response == null ) ? "NULL" : response.toString();
+		mLog.debug( "onResponse\t url:\t" + mPkURL.toString() + "\t:response:\t" + respStr );
 	}
 };
-//end static
 RequestFuture< JSONObject > mFuture = RequestFuture.newFuture();
-private static final String                    URLhead  = "http://173.17.175.92:82/";
-		//TODO make this HTTPS
-static private       HashMap< String, String > mHeaders = newHeader(), registrations2Hdr =
-		newHeader();
 /*
 58ee 6c74 7da4 b000 0cf8 24e2
 9a49 3320 f582 42ab b9b4 48d9 73cf 8a40
 */
-private String msg_id = UUID.randomUUID().toString().replace( "-", "" ).substring( 8 );
+//private String            msg_id       = UUID.randomUUID().toString().replace( "-", "" ).substring(	8 );
 private JsonObjectRequest mJsonRequest = null;
 
 static{    // http://stackoverflow.com/questions/19797842/patch-request-android-volley
 	registrations2Hdr.put( "X-HTTP-Method-Override", "PATCH" );
 }
-//The current request of this link. For future Request override getRequest().
-//private pkRequest         mLinkedRequest = null;
-//This constructor is only used for intermediate and last links in the chain.
-/*
-public pkRequest( @NonNull pkURL aPkURL, pkRequest aLinkedRequest ){
-	mLog = org.slf4j.LoggerFactory.getLogger( getClass() );
-	mPkURL = aPkURL;
-
-	if ( aLinkedRequest != null ){
-		mLinkedRequest = aLinkedRequest;
-		mLinkedRequest.msg_id = this.msg_id;
-	}
-}//cstr
-*/
 
 
 //PLACE ALL URL NAMES HERE
@@ -94,7 +78,7 @@ public enum pkURL{
 	status;
 
 	public    HashMap< String, String > mHeader;
-	public    String                    URLstr;
+	private   String                    URLstr = "";
 	//each enum needs priority and method, url, request, response, errlsnr
 	protected Priority                  mPriority;
 	protected int                       mMethod;
@@ -118,7 +102,10 @@ public enum pkURL{
 		mHeader = pkRequest.mHeaders;
 	}
 
-
+	public pkURL addToURL(String aString){
+		URLstr += aString;
+		return this;
+	}
 }//enum pkURL
 
 ///This constructor is  only used for the first link in the chain or singleton requests.
@@ -127,20 +114,23 @@ public pkRequest( final pkURL aPkURL, JSONObject aRequestBody ){
 
 	mPkURL = aPkURL;
 
+	if ( aRequestBody == null ) aRequestBody = new JSONObject();
+/*
 	try{ aRequestBody.put( "_id", msg_id ); }
 	catch ( Exception x ){
 		mLog.error( x.toString() );
 		x.printStackTrace();
 	}
+*/
 
 	mJsonRequest =
 			//this is the current request of this link. For future Requests override getRequest().
-			new JsonObjectRequest( aPkURL.mMethod, toURL(), aRequestBody, mJsonResp, mErrLsnr ){
+//			new JsonObjectRequest( aPkURL.mMethod, toURL(), aRequestBody, mJsonResp, mErrLsnr ){
+			new JsonObjectRequest( aPkURL.mMethod, toURL(), aRequestBody, mFuture, mFuture ){
 				@Override public Map< String, String > getHeaders() throws
 						AuthFailureError{ return aPkURL.mHeader; }
 
 				@Override public Priority getPriority(){ return mPkURL.mPriority; }
-
 
 			};
 
@@ -148,12 +138,13 @@ public pkRequest( final pkURL aPkURL, JSONObject aRequestBody ){
 }//cstr
 
 //private static final String URLhead = "http://192.168.1.156/";
+
 private String toURL(){
 	URL url;
 
 	switch ( mPkURL ){
 	case registrations2:
-		this.mPkURL.URLstr = "registrations/" + this.msg_id;
+		this.mPkURL.URLstr = "registrations/" + this.mPkURL.URLstr;
 		this.mPkURL.mHeader = registrations2Hdr;
 		break;
 
@@ -161,11 +152,11 @@ private String toURL(){
 		break;
 
 	default:
-		this.mPkURL.URLstr = mPkURL.name();
+		this.mPkURL.URLstr = mPkURL.name() + "/";
 	}//switch
 
 	try{
-		url = new URL( URLhead + this.mPkURL.URLstr + "/" );
+		url = new URL( URLhead + this.mPkURL.URLstr  );
 	}catch ( MalformedURLException e ){
 		mLog.error( "Error!:\t" + e.getMessage() );
 		url = null;
@@ -173,20 +164,20 @@ private String toURL(){
 	return url.toString();
 }//toURL
 
-
 //This constructor is  only used for the first link in the chain or singleton requests.
 public pkRequest( final pkURL aPkURL ){
 	mLog = org.slf4j.LoggerFactory.getLogger( getClass() );
 
 	mPkURL = aPkURL;
 	JSONObject requestBody = new JSONObject();
-	try{
-		requestBody.put( "_id", msg_id );
-		//requestBody.put( "_id", "{id-1}" );
-	}catch ( Exception x ){
+/*
+	try{ requestBody.put( "_id", msg_id ); }
+	catch ( Exception x ){
 		mLog.error( x.toString() );
 		x.printStackTrace();
 	}
+*/
+
 	mJsonRequest =
 //			new JsonObjectRequest( aPkURL.mMethod, toURL(), requestBody, mJsonResp, mErrLsnr ){
 			new JsonObjectRequest( aPkURL.mMethod, toURL(), requestBody, mFuture, mFuture ){
@@ -197,6 +188,7 @@ public pkRequest( final pkURL aPkURL ){
 			};
 
 	mJsonRequest.setShouldCache( false );
+
 }//cstr
 
 static private HashMap< String, String > newHeader(){
@@ -208,11 +200,10 @@ static private HashMap< String, String > newHeader(){
 	return newHeader;
 }
 
-public void setResponseListener( Response.Listener< JSONObject > aJsonResp ){
-	this.mJsonResp = aJsonResp;
-}
+//public void setResponseListener( Response.Listener< JSONObject > aJsonResp ){ this.mJsonResp = aJsonResp; }
 
 public void submit(){
+	//pkUtility.getInstance().debugToast( "submit:\n" + this.toString() );
 	mLog.debug( "submit:\n" + this.toString() );
 	if ( mJsonRequest != null ) //return mRequestQueue.add( mJsonRequest );
 		mFuture.setRequest( mRequestQueue.add( mJsonRequest ) );
@@ -220,38 +211,37 @@ public void submit(){
 }//submit()
 
 @Override public String toString(){
-	String toURL = toURL();
+	String toURL = toURL(),
+			headers ="",
+			JSONbody = "null";
 
 	if ( mJsonRequest == null ) return "toString() NULL mJsonRequest:\t" + toURL;
-	String hdrs;
-	try{
-		hdrs = this.mJsonRequest.getHeaders().toString();
-	}catch ( AuthFailureError aAuthFailureError ){ hdrs = "ERROR: getHeaders()"; }
+
+	try{ headers = this.mJsonRequest.getHeaders().toString(); }
+	catch ( AuthFailureError aAuthFailureError ){ headers = "ERROR: getHeaders()"; }
+
 
 	byte[] body = mJsonRequest.getBody();
-	String bodyStr = ( body == null ) ? "NULL" : new String( body );
-
-
+	if ( body != null ){
+		try{
+			final int indentSpaces = 4;
+			JSONbody = new JSONObject( new String( body ) ).toString( indentSpaces );
+		}catch ( JSONException aE ){
+			mLog.debug( aE.getMessage() );
+			JSONbody = "error parsing JSONbody!";
+		}
+	}//if
 	return new StringBuilder( "\nmethod:\t:" + mJsonRequest.getMethod() )
-			.append( "\nheaders:\t" + hdrs )
-			.append( "\nbody:\t" + bodyStr )
+			.append( "\nheaders:\t" + headers )
+			.append( "\nbody:\t" + JSONbody )
+			.append( "\nbody length:\t" + body.length )
 			.append( "\nBodyContentType:\t" + mJsonRequest.getBodyContentType() )
 			.append( "\nPriority:\t" + mJsonRequest.getPriority() )
 			.append( "\ngetUrl():\t" + mJsonRequest.getUrl() )
-			.append( "\ntoURL():\t" + toURL )
-			.append( "\n" )
+			.append( "\ntoURL():\t" + toURL  )
+			//.append( "\n" )
 			.toString();
 
 }//toString()
 
-/*
-public Request submit(){
-	mLog.debug( "submit:\n" + this.toString() );
-	//if ( mLinkedRequest != null ) mLog.debug( "mLinkedRequest:\t" + mLinkedRequest.toString() );
-if ( mJsonRequest != null ) //return mRequestQueue.add( mJsonRequest );
-	mFuture.setRequest(mRequestQueue.add(mJsonRequest));
-
-	return null;
-}//submit()
-*/
 }//class pkRequest

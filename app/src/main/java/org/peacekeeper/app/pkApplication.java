@@ -33,13 +33,15 @@ static private final Logger mLog = LoggerFactory.getLogger( pkApplication.class 
 //    mLog.debug("pkApplication.OnCreate:\t name: " + SpongyCastleProvider.getName() + "\t info: " + SpongyCastleProvider.getInfo());
 
 	// Logging set to help debug issues, remove before releasing your app.
-	OneSignal.setLogLevel( OneSignal.LOG_LEVEL.VERBOSE, LOG_LEVEL.FATAL );
+	//OneSignal.setLogLevel( OneSignal.LOG_LEVEL.VERBOSE, LOG_LEVEL.FATAL );
 
+/*
 	OneSignal.startInit( this )
 	         .setNotificationOpenedHandler( new OneSignalNotificationOpenedHandler() )
 	         //.setNotificationReceivedHandler( new OneSignalNotificationReceivedHandler() )
 	         //.autoPromptLocation( true )
 	         .init();
+*/
 	pkUtility.getInstance( this );//initialize the Utility
 	mLog.debug( "pkApplication.OnCreate COMPLETE" );
 }

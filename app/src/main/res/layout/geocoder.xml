@@ -2,7 +2,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical" android:layout_width="match_parent"
               android:layout_height="match_parent">
-
+<!--
+    https://www.sitepoint.com/adding-maps-to-an-android-app-with-google-play-services/
+-->
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:tools="http://schemas.android.com/tools"
               xmlns:map="http://schemas.android.com/apk/res-auto"
@@ -16,5 +18,6 @@
               map:uiRotateGestures="true"
               map:uiScrollGestures="true"
               map:uiZoomGestures="true"
-              map:uiZoomControls="true"/>
+              map:uiZoomControls="true"
+        />
 </LinearLayout>

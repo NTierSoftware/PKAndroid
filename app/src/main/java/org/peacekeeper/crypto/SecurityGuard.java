@@ -81,7 +81,7 @@ static private final String ECDSA = "ECDSA"
 							, keyStoreFilename = Alias + keyStoreType
 							, emailAddr = "ntiersoftwareengineering@gmail.com";
 //http://stackoverflow.com/questions/16412315/creating-custom-x509-v3-extensions-in-java-with-bouncy-castle
-static private final ASN1ObjectIdentifier device = new ASN1ObjectIdentifier( "2.5.6.14" );
+//static private final ASN1ObjectIdentifier device = new ASN1ObjectIdentifier( "2.5.6.14" );
 static private KeyPair mKEYPAIR = null;
 static private KeyStore mKEYSTORE = null;
 //static private byte[] hash = null;
@@ -126,16 +126,15 @@ static public PKCS10CertificationRequest genCSR(){
 
 //http://stackoverflow.com/questions/12863235/csr-generated-with-bouncycastle-missing-public-key-and-attributes
 //http://stackoverflow.com/questions/34169954/create-pkcs10-request-with-subject-alternatives-using-bouncy-castle-in-java
-//		//extnsnGenr.addExtension(Extension.subjectAlternativeName, false, subjectAltName);
-		//extnsnGenr.addExtension(Extension.subjectAlternativeName, false, new GeneralName(GeneralName.rfc822Name, emailAddr) );
+//extnsnGenr.addExtension(Extension.subjectAlternativeName, false, subjectAltName);
+//extnsnGenr.addExtension(Extension.subjectAlternativeName, false, new GeneralName(GeneralName.rfc822Name, emailAddr) );
 
-		PKCS10CertificationRequestBuilder p10Builder = new JcaPKCS10CertificationRequestBuilder(
-				getX500Name()
-				, pair.getPublic() )
-//				.addAttribute(Extension.subjectAlternativeName, new DEROctetString( subjectAltName)   )
-.addAttribute( PKCSObjectIdentifiers.pkcs_9_at_extensionRequest, extnsnGenr.generate() );
-		//.setLeaveOffEmptyAttributes(false)
-		;
+		PKCS10CertificationRequestBuilder p10Builder =
+				new JcaPKCS10CertificationRequestBuilder ( getX500Name() , pair.getPublic() )
+				.addAttribute( PKCSObjectIdentifiers.pkcs_9_at_extensionRequest, extnsnGenr.generate() );
+				//.addAttribute(Extension.subjectAlternativeName, new DEROctetString( subjectAltName)   )
+				//.setLeaveOffEmptyAttributes(false)
+
 
 		JcaContentSignerBuilder csBuilder = new JcaContentSignerBuilder( SHA256withECDSA );
 
@@ -431,17 +430,15 @@ static private X500Name getX500Name(){
 */
 
 //	final String testPostalCode = "94602-4105";
-	final String testPostalCode = "92117"
-				 , deviceID = UUID.randomUUID().toString();
+	final String testPostalCode = "92117";
+				 //, deviceID = UUID.randomUUID().toString();
 
 	return new X500NameBuilder( BCStyle.INSTANCE )
-//			.addRDN( BCStyle.CN, Alias )
-.addRDN( BCStyle.CN, "testCN" )
+.addRDN( BCStyle.CN, "JDtestCN" )
 //.addRDN( BCStrictStyle.EmailAddress, emailAddr )
 .addRDN( BCStyle.POSTAL_CODE, testPostalCode )
 .addRDN( BCStyle.C, "US" )
-.addRDN( device, deviceID )
-
+//.addRDN( device, deviceID )
 .build();
 }//getX500Name
 
@@ -470,9 +467,9 @@ static private X509Certificate genRootCertificate( KeyPair kp ){
 		BigInteger certSerialnum = new BigInteger( 80, new SecureRandom() );//new Random()),
 
 		X509v3CertificateBuilder certGen = new JcaX509v3CertificateBuilder(
-				getX500Name(), //builder.build(),
+				getX500Name(),
 				certSerialnum,
-				now, //new Date(System.currentTimeMillis() - 50000),
+				now,
 				expire,
 				getX500Name(),
 				kp.getPublic()
@@ -484,7 +481,7 @@ static private X509Certificate genRootCertificate( KeyPair kp ){
 				.setProvider( PROVIDER.getName() )
 				.getCertificate( certHolder );
 	}//try
-	catch ( OperatorCreationException | CertificateException X ){//| CertIOException X ) {
+	catch ( OperatorCreationException | CertificateException X ){
 		pkException CRYPTOERR = new pkException( pkErrCode.CRYPTO ).set(
 				"Crypto selfSignedCert gen err", X );
 		mLog.error( CRYPTOERR.toString() );
@@ -511,9 +508,7 @@ static private void genKeyStore(){
 		store();
 
 		mLog.debug( "mKEYSTORE init'd" );
-	}catch ( KeyStoreException
-//}catch ( KeyStoreException | NoSuchProviderException
-			| IOException | NoSuchAlgorithmException | CertificateException X ){
+	}catch ( KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException X ){
 		pkException CRYPTOERR = new pkException( pkErrCode.CRYPTO ).set( "genKeyStore err", X );
 		;
 		mLog.error( CRYPTOERR.toString() );
@@ -627,27 +622,28 @@ static private boolean unRegister(){//purges mKEYSTORE
 return unRegister;
 }//unRegister()
 
-static public JSONObject getRegistration(JSONObject registration){
+//static public JSONObject getRegistration(JSONObject registration){
+static public JSONObject getRegistration(){
 	PKCS10CertificationRequest CSR = genCSR();
 	mLog.debug( toPEM( CSR ) );
 
-	//JSONObject registration = new JSONObject();
+	JSONObject registration = new JSONObject();
 	try{
 		String CSRstr = Base64.toBase64String( CSR.getEncoded() );
 
-		registration.put( "accepted", false )
+		registration
+					//.put( "accepted", false )
 		            .put( "csr", CSRstr )
-		            //.put( "location", getLocation() )
-		            //.put( "location", new Point( new LatLng( 35.850607,-76.734215) ) )
-		            .put( "pushId" , "JDbogus-4" )
+					.put( "pushId" , "Bogus-1" )
+					.put( "referredBy", "rowland@river2sea.org" )
+					.put( "location", getLocation() )
+					.put( "deviceOSType", "Android" )
+//					.put( "deviceOSVersion", mUtility.getVersion().toString() )
+					.put( "deviceOSVersion", "v1" )
 //		            .put( "deviceId", mUtility.getUniqDeviceID().toString() )
-		            .put( "deviceId", "58ee6c757da4b0000cf824e5" )
-		            .put( "deviceCertificate", "" )
-		            .put( "deviceOSType", "Android" )
-		            .put( "deviceOSVersion", mUtility.getVersion().toString() )
-		            //.put( "keeperId", "" )
-		            .put( "receivedCode", "" )
-		            .put( "referredBy", "JDtest@boosh.com" );
+//		            .put( "deviceId", "58ee6c757da4b0000cf824e5" )
+//		            .put( "deviceCertificate", "" )
+		;
 
 	}catch ( IOException | JSONException X ){
 		mLog.error( X.getMessage() );
@@ -659,50 +655,23 @@ static public JSONObject getRegistration(JSONObject registration){
 }//getRegistration
 
 
-/*
 static private JSONObject getLocation(){//BOGUS
 //	{ "type": "Point", "coordinates": [ 35.850607,-76.734215 ] }
 	JSONObject location = new JSONObject();
-	JSONArray coords = new JSONArray();
 	try{
-		coords.put( 35.850607  )
-		      .put( 76.734215  );
+//		coords.put( 35.850607  ).put( 76.734215  );
+		JSONArray coords = new JSONArray()
+				.put( 100.1 )
+				.put( 10.2 );
 		location
-			.put("type", "Point")
-			.put( "coordinates", coords);
+			.put( "coordinates", coords)
+			.put("type", "Point");
 
 	}catch ( JSONException aE ){ aE.printStackTrace(); }
 
 return location;
 }
-*/
 
-/*
-static private JSONObject getLocation(){//BOGUS
-//	{ "type": "Point", "coordinates": [ 35.850607,-76.734215 ] }
-	JSONObject location = new JSONObject();
-	//JSONArray coords = new JSONArray();
-	GeoJsonPoint point = new GeoJsonPoint( new LatLng( 35.850607,-76.734215));
-	Point point1 = new Point( new LatLng( 35.850607,-76.734215) );
-	JSONObject loc = new JSONObject();
-	try{
-/*
-		coords.put( 35.850607  )
-		      .put( 76.734215  );
-*//*
-
-		location
-				//.put("type", "Point")
-				.put( "coordinates", point);
-//			.put( "coordinates", coords);
-		//loc.put( point1 )
-
-	}catch ( JSONException aE ){ aE.printStackTrace(); }
-
-	return location;
-	//return new GeoJsonPoint( new LatLng( 35.850607,-76.734215));
-}
-*/
 
 }//class SecurityGuard
 

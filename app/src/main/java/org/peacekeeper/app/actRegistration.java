@@ -17,6 +17,7 @@ import com.google.android.gms.common.api.GoogleApiClient.*;
 import org.json.*;
 import org.peacekeeper.crypto.SecurityGuard;
 import org.peacekeeper.service.*;
+import org.peacekeeper.service.pkRequest.pkURL;
 import org.peacekeeper.util.*;
 
 import org.slf4j.*;
@@ -39,7 +40,6 @@ public class actRegistration extends AppCompatActivity implements
  user's intent. If the value is true, the activity tries to fetch the address as soon as
  GoogleApiClient connects.
  */
-protected boolean mAddressRequested = false;
 //The formatted location address.
 protected String mAddressOutput = "";
 //Displays the location address.
@@ -47,11 +47,21 @@ private EditText mEditName, mEditEmail, mEditHomeLocation;
 // Visible while the address is being fetched.
 //ProgressBar mProgressBar;
 
+/*
 static private final Logger mLog = LoggerFactory.getLogger( actRegistration.class );
 static private final LoggerContext mLoggerContext =
 		(LoggerContext) LoggerFactory.getILoggerFactory();
 static private final ContextInitializer mContextInitializer =
 		new ContextInitializer( mLoggerContext );
+*/
+
+private static final LoggerContext mLoggerContext =
+		(LoggerContext) LoggerFactory.getILoggerFactory();
+private static final ContextInitializer mContextInitializer =
+		new ContextInitializer( mLoggerContext );
+private static final Logger mLog = LoggerFactory.getLogger( actRegistration.class );
+
+
 private pkUtility mUtility;
 //private LatLng mLatLng;
 private Button mbuttonGeocode, buttonNext;
@@ -80,10 +90,6 @@ public void onCreate( Bundle savedInstanceState ){
 	mEditEmail.setOnFocusChangeListener(this);
 
 	buttonNext = (Button) findViewById( R.id.buttonNext );
-
-
-	//updateUIWidgets();
-	//mLatLng =  intent.getParcelableExtra( FetchAddressIntentService.LATLNG );
 }
 
 //Runs when a GoogleApiClient object successfully connects.
@@ -123,15 +129,17 @@ public void buttonNext( View view ){
 //	startRESTService( pkRequest.pkURL.status );
 //	mUtility.debugToast( "buttonNext" );
 
-	JSONObject registration = getLocation();
+//	JSONObject registration = getLocation();
 	startService(
 			new Intent( this, RESTIntentService.class )
 					.putExtra( RESTIntentService.RECEIVER, mRESTResultReceiver )
-					.putExtra( RESTIntentService.REQUEST, pkRequest.pkURL.status.name() )
-					.putExtra( RESTIntentService.JSONRequest, SecurityGuard.getRegistration( registration ).toString() )
+//					.putExtra( RESTIntentService.REQUEST, pkRequest.pkURL.status.name() )
+					.putExtra( RESTIntentService.REQUEST, pkURL.registrations.name() )
+					.putExtra( RESTIntentService.JSONRequest, SecurityGuard.getRegistration().toString() )
 	            );
 }
 
+/*
 static private JSONObject getLocation(){//BOGUS
 //	{ "type": "Point", "coordinates": [ 35.850607,-76.734215 ] }
 	JSONObject location = new JSONObject();
@@ -147,6 +155,7 @@ static private JSONObject getLocation(){//BOGUS
 
 	return location;
 }
+*/
 
 /**
  Called when the focus state of a view has changed.
@@ -154,9 +163,17 @@ static private JSONObject getLocation(){//BOGUS
  @param hasFocus The new focus state of v.
  */
 @Override public void onFocusChange( final View v, final boolean hasFocus ){
+	final boolean textsCompleted = !(mEditName.getText().toString().isEmpty()
+	                               || mEditEmail.getText().toString().isEmpty()
+	                               || mEditHomeLocation.getText().toString().isEmpty()) ;
+
+/*
 	final boolean textsCompleted = !mEditName.getText().toString().isEmpty()
-	                         && !mEditEmail.getText().toString().isEmpty()
-	                         && !mEditHomeLocation.getText().toString().isEmpty();
+	                               && !mEditEmail.getText().toString().isEmpty()
+	                               && !mEditHomeLocation.getText().toString().isEmpty();
+*/
+
+
 
 	buttonNext.setEnabled( textsCompleted );
 	//if ( textsCompleted )buttonNext.setVisibility( View.VISIBLE );

@@ -1,13 +1,11 @@
 package org.peacekeeper.util;
-/** @author JD see http://developer.android.com/training/basics/data-storage/files.html
-	usage: static public pkUtility mUtility;
-	mUtility = pkUtility.getInstance(this);
-*/
+/**
+ @author JD see http://developer.android.com/training/basics/data-storage/files.html
+ usage: static public pkUtility mUtility;
+ mUtility = pkUtility.getInstance(this); */
 
-import android.app.AlertDialog;
 import android.content.*;
 import android.content.res.*;
-import android.location.LocationManager;
 import android.net.*;
 import android.os.*;
 import android.preference.PreferenceManager;
@@ -20,6 +18,7 @@ import com.android.volley.toolbox.*;
 
 import org.json.*;
 import org.peacekeeper.exception.*;
+import org.peacekeeper.service.*;
 import org.slf4j.*;
 
 import java.io.*;
@@ -29,50 +28,65 @@ import java.util.*;
 
 public class pkUtility extends ContextWrapper{//implements AutoCloseable
 
+static public JSONObject errJSONObject;
+private static final Logger mLog = LoggerFactory.getLogger( pkUtility.class );
+
+private static final String ExternalStorageState = Environment.getExternalStorageState()
+		//, SHARED_PREFS_FNAME = "PK.sharedprefs"
+		, ConnectionPropertiesFname              = "Connection.properties";
+static private final int          maxCacheSizeInBytes = 1024 * 1024 * 2;//= 2Mb
 private static pkUtility mUtility;
-private static final Logger	mLog	= LoggerFactory.getLogger( pkUtility.class );
-
-private static final String		ExternalStorageState	= Environment.getExternalStorageState()
-								//, SHARED_PREFS_FNAME = "PK.sharedprefs"
-								, ConnectionPropertiesFname = "Connection.properties"
-								;
-
-
 private static ConnectivityManager mConnMgr;
-private AssetManager mAssetManager;
-
 private static Context mContext;
-public static pkUtility getInstance(Context context){
-	 if (mUtility == null) { mUtility = new pkUtility(context); }
-	mLog.debug( "pkUtility getInstance");
+static private       RequestQueue mRequestQueue       = null;
+private        AssetManager        mAssetManager;
+private TestResult mTestResult = TestResult.Unknown;
 
-     return mUtility;
+static{
+	try{
+		errJSONObject = new JSONObject().put( "errJSONObject",
+		                                      "ERROR" );
+	}catch ( JSONException aE ){}
+}
+
+
+
+
+//private constructor prevents instantiation.  We only need/want one of these.
+private pkUtility( Context context ){
+	super( context );
+	mContext = context;
+	mConnMgr = (ConnectivityManager) getSystemService( Context.CONNECTIVITY_SERVICE );
+	mAssetManager = getAssets();
+	//mSharedPreferences = context.getSharedPreferences(SHARED_PREFS_FNAME, MODE_PRIVATE);
+}
+
+public static pkUtility getInstance( Context context ){
+	if ( mUtility == null ){ mUtility = new pkUtility( context ); }
+	return mUtility;
 }
 
 //This method is used for classes that have no context. It presumes that
 //pkUtility has been initialized or an exception is thrown!
 public static pkUtility getInstance(){
-	 if (mUtility == null) {throw new pkException(pkErrCode.INITIALIZATION_NEEDED); }//ERRROR pkUtility must be initialized!
-    return mUtility;
+	if ( mUtility == null ){
+		throw new pkException( pkErrCode.INITIALIZATION_NEEDED );
+	}//ERRROR pkUtility must be initialized!
+	return mUtility;
 
 
-}
-
-//private constructor prevents instantiation.  We only need/want one of these.
-private pkUtility(Context context) {
-	super( context );
-    mContext = context;
-    mConnMgr = (ConnectivityManager)getSystemService( Context.CONNECTIVITY_SERVICE );
-	mAssetManager = getAssets();
-	//mSharedPreferences = context.getSharedPreferences(SHARED_PREFS_FNAME, MODE_PRIVATE);
 }
 
 //public SharedPreferences getSharedPreferences(){  return mSharedPreferences;}
 /* Checks if external storage is available for read and write */
-public static boolean isExternalStorageWritable(){ return Environment.MEDIA_MOUNTED.equals( ExternalStorageState ); }
-/* Checks if external storage is available to at least read */
-public static boolean isExternalStorageReadable(){ return Environment.MEDIA_MOUNTED_READ_ONLY.equals(ExternalStorageState); }
+public static boolean isExternalStorageWritable(){
+	return Environment.MEDIA_MOUNTED.equals( ExternalStorageState );
+}
 
+/* Checks if external storage is available to at least read */
+public static boolean isExternalStorageReadable(){
+	return Environment.MEDIA_MOUNTED_READ_ONLY.equals( ExternalStorageState );
+}
 
 public static boolean isAndroidOnline(){
 /* http://androidresearch.wordpress.com/2013/05/10/dealing-with-asynctask-and-screen-orientation/
@@ -86,105 +100,23 @@ public static boolean isAndroidOnline(){
 	}
 	mLog.trace( "network detected" );
 	final boolean isConnected = networkInfo.isConnected();
-	mLog.trace("network " + (isConnected ? "" : "  NOT!!  ") + "connected");
+	mLog.trace( "network " + ( isConnected ? "" : "  NOT!!  " ) + "connected" );
 	return isConnected;
 }// isAndroidOnline()
-
-
-public String deviceInfo(){
-	// http://stackoverflow.com/questions/8284706/send-email-via-gmail
-	String packageName = getPackageName(),
-			 versionName = "version Name|Number unknown!",
-			 versionCode = versionName;
-
-	try{
-		final android.content.pm.PackageInfo pinfo = getPackageManager().getPackageInfo( packageName, 0 );
-		versionName = "version Name: " + pinfo.versionName;
-		versionCode = "v." + pinfo.versionCode;
-	}
-	catch( android.content.pm.PackageManager.NameNotFoundException e ){
-		mLog.error( "getPackageInfo getPackageName not found: " + packageName, e );
-	}
-
-	return new StringBuilder().append( "\n************ Device info ***********" ).
-												//append( "\nApplication name:\t"). append( Messages.getString( "ApplicationName" ) ).
-												append( "\nversionCode:\t" ).append( versionCode ).
-												append( "\nversionName:\t" ).append( versionName ).
-												append( "\npackage:\t" ).append( packageName ).
-												append( "\nBrand:\t" ).append( Build.BRAND ).
-												append( "\nDevice:\t" ).append( Build.DEVICE ).
-												append( "\nModel:\t" ).append( Build.MODEL ).
-												append( "\nManufactr:\t" ).append( Build.MANUFACTURER ).
-												append( "\nBuild.USER:\t" ).append( Build.USER ).
-												append( "\nRadioVersion:\t" ).append( Build.getRadioVersion() ).
-												append( "\nId:\t" ).append( Build.ID ).
-												append( "\nProduct:\t" ).append( Build.PRODUCT ).
-
-												append( "\n************ Firmware ************\n" ).
-												append( "\nRelease:\t" ).append( Build.VERSION.RELEASE ).
-												append( "\nIncremental:\t" ).append( Build.VERSION.INCREMENTAL ).
-												append( "\nCodeName:\t" ).append( Build.VERSION.CODENAME ).
-												append( "\nSDK:\t" ).append( Build.VERSION.SDK_INT ).
-												append( "\nBOARD:\t" ).append( Build.BOARD ).
-												append( "\nBOOTLOADER:\t" ).append( Build.BOOTLOADER ).
-												append( "\nCPU_ABI:\t" ).append( Build.CPU_ABI ).
-												append( "\nCPU_ABI2:\t" ).append( Build.CPU_ABI2 ).
-												append( "\nDISPLAY:\t" ).append( Build.DISPLAY ).
-												append( "\nFINGERPRINT:\t" ).append( Build.FINGERPRINT ).
-												append( "\nHARDWARE:\t" ).append( Build.HARDWARE ).
-												append( "\nHOST:\t" ).append( Build.HOST ).
-												append( "\nSERIAL:\t" ).append( Build.SERIAL ).
-												append( "\nTAGS:\t" ).append( Build.TAGS ).
-												append( "\nTYPE:\t" ).append( Build.TYPE ).
-
-												append( "\n************ Environment ************\n" ).
-												append(Environment.DIRECTORY_ALARMS).
-												append(Environment.DIRECTORY_DCIM).
-												//append(Environment.DIRECTORY_DOCUMENTS).
-												append(Environment.DIRECTORY_DOWNLOADS).
-												append(Environment.DIRECTORY_MOVIES).
-												append(Environment.DIRECTORY_MUSIC).
-												append(Environment.DIRECTORY_NOTIFICATIONS).
-												append(Environment.DIRECTORY_PICTURES).
-												append(Environment.DIRECTORY_PODCASTS).
-												append(Environment.DIRECTORY_RINGTONES).
-												append(Environment.MEDIA_BAD_REMOVAL).
-												append(Environment.MEDIA_CHECKING).
-												append(Environment.MEDIA_MOUNTED).
-												append(Environment.MEDIA_MOUNTED_READ_ONLY).
-												append(Environment.MEDIA_NOFS).
-												append(Environment.MEDIA_REMOVED).
-												append(Environment.MEDIA_SHARED).
-												//append(Environment.MEDIA_UNKNOWN).
-												append(Environment.MEDIA_UNMOUNTABLE).
-												append(Environment.MEDIA_UNMOUNTED).
-												append(Environment.getExternalStorageState()).
-												append(Environment.isExternalStorageEmulated()).
-												append(Environment.isExternalStorageRemovable()).
-												append(Environment.getDataDirectory()).
-												append(Environment.getDownloadCacheDirectory()).
-												append(Environment.getExternalStorageDirectory()).
-												append(Environment.getRootDirectory()).
-
-												append( "\n************************\n" ).
-												append( "\n\n\nYou may also enter your (optional) message here:\n" ).
-	toString();
-
-}// deviceInfo()
 
 public static String AboutDevice(){
 // http://www.herongyang.com/Android/System-Information-android-os-Environment-Class.html
 	StringBuilder AboutDevice = new StringBuilder().
-										append( "\n************ System properties ************\n" );
+			                                               append( "\n************ System properties ************\n" );
 
 	Properties props = System.getProperties();
 	Enumeration e = props.propertyNames();
 	while ( e.hasMoreElements() ){
-		String nextElem = (String)e.nextElement();
+		String nextElem = (String) e.nextElement();
 		AboutDevice.append( nextElem ).
-						append( ":\t" ).
-						append( props.getProperty( nextElem ) ).
-						append( "\n" );
+				append( ":\t" ).
+				           append( props.getProperty( nextElem ) ).
+				           append( "\n" );
 	}
 
 	AboutDevice.append( "\n************ Environment ************\n" );
@@ -194,172 +126,233 @@ public static String AboutDevice(){
 	Iterator i = keys.iterator();  */
 	Iterator i = envs.keySet().iterator();
 	while ( i.hasNext() ){
-		String nextKey = (String)i.next();
+		String nextKey = (String) i.next();
 		AboutDevice.append( nextKey ).
-						append( ":\t" ).
-						append( (String)envs.get( nextKey ) ).
-						append( "\n" );
+				append( ":\t" ).
+				           append( (String) envs.get( nextKey ) ).
+				           append( "\n" );
 	}
 
 	AboutDevice.append( "\ndata dir:\t" ).
-					append( Environment.getDataDirectory().getPath()).
-					append( "\ndownload cache dir:\t" ).
-					append( Environment.getDownloadCacheDirectory().getPath()).
-					append( "\nExternal Storage dir:\t" ).
-					append( Environment.getExternalStorageDirectory().getPath()).
-					append( "\nRoot dir:\t" ).
-					append( Environment.getRootDirectory().getPath()).
-					append("\nExternalStorageState:\t").
-					append(Environment.getExternalStorageState()).
-					append("\nisExternalStorageEmulated?:\t").
-					append(Environment.isExternalStorageEmulated()).
-					append("\nisExternalStorageRemovable?:\t").
-					append(Environment.isExternalStorageRemovable() + "\n\n" )
-					;
+			append( Environment.getDataDirectory().getPath() ).
+			           append( "\ndownload cache dir:\t" ).
+			           append( Environment.getDownloadCacheDirectory().getPath() ).
+			           append( "\nExternal Storage dir:\t" ).
+			           append( Environment.getExternalStorageDirectory().getPath() ).
+			           append( "\nRoot dir:\t" ).
+			           append( Environment.getRootDirectory().getPath() ).
+			           append( "\nExternalStorageState:\t" ).
+			           append( Environment.getExternalStorageState() ).
+			           append( "\nisExternalStorageEmulated?:\t" ).
+			           append( Environment.isExternalStorageEmulated() ).
+			           append( "\nisExternalStorageRemovable?:\t" ).
+			           append( Environment.isExternalStorageRemovable() + "\n\n" )
+	;
 
 
 	return AboutDevice.toString();
 }
 
+public String getServerIPaddr(){
+	return PreferenceManager.getDefaultSharedPreferences( this )
+	                        .getString( "ServerIPaddr",
+	                                    getPropertiesFromAssets( ConnectionPropertiesFname )
+			                                    .getProperty( "ServerIPaddrDefault" ) );
+}
+//Receiver for data sent from RESTIntentService.
 
-
-public Properties getPropertiesFromAssets(String AssetFilename){
+public Properties getPropertiesFromAssets( String AssetFilename ){
 	Properties properties = null;
-	try {
-		InputStream inputStream = mAssetManager.open(AssetFilename);
+	try{
+		InputStream inputStream = mAssetManager.open( AssetFilename );
 		properties = new Properties();
-		properties.load(inputStream);
+		properties.load( inputStream );
 		inputStream.close();
 
-	} catch (IOException  e) {
-		pkException ASSETFILE_NOT_FOUND = new pkException(pkErrCode.ASSETFILE_NOT_FOUND)
-									.set("AssetFilename", AssetFilename);
+	}catch ( IOException e ){
+		pkException ASSETFILE_NOT_FOUND = new pkException( pkErrCode.ASSETFILE_NOT_FOUND )
+				.set( "AssetFilename", AssetFilename );
 		throw ASSETFILE_NOT_FOUND;
 	}
 
 	return properties;
 }//getPropertiesFromAssets
 
-public String getServerIPaddr(){
-	return PreferenceManager.getDefaultSharedPreferences(this)
-			.getString("ServerIPaddr",
-					          getPropertiesFromAssets(ConnectionPropertiesFname)
-							          .getProperty("ServerIPaddrDefault"));
-}
-
 public Resources getResources(){ return mContext.getResources();}
-
-
-
-public enum TestResult{ OK, DBdown, Webdown, Netdown, GPSdown, MismatchedDeployment; }
-public TestResult Test(){ return TestResult.Netdown; }
-
 
 @Override public String toString(){
 	return new StringBuilder()
-				.append( deviceInfo() )
-				.toString();
+			.append( deviceInfo() )
+			.toString();
 }//toString()
 
+public String deviceInfo(){
+	// http://stackoverflow.com/questions/8284706/send-email-via-gmail
+	String packageName = getPackageName(),
+			versionName = "version Name|Number unknown!",
+			versionCode = versionName;
 
+	try{
+		final android.content.pm.PackageInfo pinfo =
+				getPackageManager().getPackageInfo( packageName, 0 );
+		versionName = "version Name: " + pinfo.versionName;
+		versionCode = "v." + pinfo.versionCode;
+	}catch ( android.content.pm.PackageManager.NameNotFoundException e ){
+		mLog.error( "getPackageInfo getPackageName not found: " + packageName, e );
+	}
 
-private String getANDROID_ID(){
-// Settings.Secure.ANDROID_ID returns the unique DeviceID Works for Android 2.2 and above
-//The value may change if a factory reset is performed on the device.
-return Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-}//getANDROID_ID
+	return new StringBuilder().append( "\n************ Device info ***********" ).
+			//append( "\nApplication name:\t"). append( Messages.getString( "ApplicationName" ) ).
+					append( "\nversionCode:\t" ).append( versionCode ).
+					append( "\nversionName:\t" ).append( versionName ).
+					append( "\npackage:\t" ).append( packageName ).
+					append( "\nBrand:\t" ).append( Build.BRAND ).
+					append( "\nDevice:\t" ).append( Build.DEVICE ).
+					append( "\nModel:\t" ).append( Build.MODEL ).
+					append( "\nManufactr:\t" ).append( Build.MANUFACTURER ).
+					append( "\nBuild.USER:\t" ).append( Build.USER ).
+					append( "\nRadioVersion:\t" ).append( Build.getRadioVersion() ).
+					append( "\nId:\t" ).append( Build.ID ).
+					append( "\nProduct:\t" ).append( Build.PRODUCT ).
 
-static public JSONObject errJSONObject;
-static{
-	try{ errJSONObject = new JSONObject().put( "errJSONObject", "ERROR" ); }
-	catch ( JSONException aE ){}
-}
+					append( "\n************ Firmware ************\n" ).
+					append( "\nRelease:\t" ).append( Build.VERSION.RELEASE ).
+					append( "\nIncremental:\t" ).append( Build.VERSION.INCREMENTAL ).
+					append( "\nCodeName:\t" ).append( Build.VERSION.CODENAME ).
+					append( "\nSDK:\t" ).append( Build.VERSION.SDK_INT ).
+					append( "\nBOARD:\t" ).append( Build.BOARD ).
+					append( "\nBOOTLOADER:\t" ).append( Build.BOOTLOADER ).
+					append( "\nCPU_ABI:\t" ).append( Build.CPU_ABI ).
+					append( "\nCPU_ABI2:\t" ).append( Build.CPU_ABI2 ).
+					append( "\nDISPLAY:\t" ).append( Build.DISPLAY ).
+					append( "\nFINGERPRINT:\t" ).append( Build.FINGERPRINT ).
+					append( "\nHARDWARE:\t" ).append( Build.HARDWARE ).
+					append( "\nHOST:\t" ).append( Build.HOST ).
+					append( "\nSERIAL:\t" ).append( Build.SERIAL ).
+					append( "\nTAGS:\t" ).append( Build.TAGS ).
+					append( "\nTYPE:\t" ).append( Build.TYPE ).
+
+					append( "\n************ Environment ************\n" ).
+					append( Environment.DIRECTORY_ALARMS ).
+					append( Environment.DIRECTORY_DCIM ).
+			//append(Environment.DIRECTORY_DOCUMENTS).
+					append( Environment.DIRECTORY_DOWNLOADS ).
+					append( Environment.DIRECTORY_MOVIES ).
+					append( Environment.DIRECTORY_MUSIC ).
+					append( Environment.DIRECTORY_NOTIFICATIONS ).
+					append( Environment.DIRECTORY_PICTURES ).
+					append( Environment.DIRECTORY_PODCASTS ).
+					append( Environment.DIRECTORY_RINGTONES ).
+					append( Environment.MEDIA_BAD_REMOVAL ).
+					append( Environment.MEDIA_CHECKING ).
+					append( Environment.MEDIA_MOUNTED ).
+					append( Environment.MEDIA_MOUNTED_READ_ONLY ).
+					append( Environment.MEDIA_NOFS ).
+					append( Environment.MEDIA_REMOVED ).
+					append( Environment.MEDIA_SHARED ).
+			//append(Environment.MEDIA_UNKNOWN).
+					append( Environment.MEDIA_UNMOUNTABLE ).
+					append( Environment.MEDIA_UNMOUNTED ).
+					append( Environment.getExternalStorageState() ).
+					append( Environment.isExternalStorageEmulated() ).
+					append( Environment.isExternalStorageRemovable() ).
+					append( Environment.getDataDirectory() ).
+					append( Environment.getDownloadCacheDirectory() ).
+					append( Environment.getExternalStorageDirectory() ).
+					append( Environment.getRootDirectory() ).
+
+					append( "\n************************\n" ).
+					append( "\n\n\nYou may also enter your (optional) message here:\n" ).
+					toString();
+
+}// deviceInfo()
 
 public JSONObject getUniqDeviceID(){
 
 	JSONObject uniqDeviceID = new JSONObject();
-	try {
-		uniqDeviceID.put("ANDROID_ID", getANDROID_ID() )
-					.put("SERIAL_NO", getSystemProperty("ro.serialno"))
-					.put("BUILD", android.os.Build.SERIAL)
-					//.put("randomUUID", UUID.randomUUID().toString() )
-				;
-	} catch (JSONException e) {
+	try{
+		uniqDeviceID.put( "ANDROID_ID", getANDROID_ID() )
+		            .put( "SERIAL_NO", getSystemProperty( "ro.serialno" ) )
+		            .put( "BUILD", android.os.Build.SERIAL )
+		//.put("randomUUID", UUID.randomUUID().toString() )
+		;
+	}catch ( JSONException e ){
 		mLog.error( e.getMessage() );
 		uniqDeviceID = errJSONObject;
 	}
-return uniqDeviceID;
+	return uniqDeviceID;
 }//getUniqDeviceID
 
+private String getANDROID_ID(){
+// Settings.Secure.ANDROID_ID returns the unique DeviceID Works for Android 2.2 and above
+//The value may change if a factory reset is performed on the device.
+	return Settings.Secure.getString( getContentResolver(), Settings.Secure.ANDROID_ID );
+}//getANDROID_ID
+
+public static String getSystemProperty( String sysProperty ){
+// System Property "ro.serialno" returns the serial number as unique number Works for Android 2.3 and above
+	String retVal = null;
+	try{
+		Class< ? > c = Class.forName( "android.os.SystemProperties" );
+		Method get = c.getMethod( "get", String.class, String.class );
+		//serialnum = (String)(   get.invoke(c, "ro.serialno", "unknown" )  );
+		retVal = (String) ( get.invoke( c, sysProperty, null ) );
+	}catch ( Exception ignored ){}
+	return retVal;
+}//getSystemProperty
 
 public JSONObject getVersion(){
 //	String manufacturer = Build.MANUFACTURER, model = Build.MODEL;
 	JSONObject version = new JSONObject();
-	try {
-		version.put("SDK ver", Build.VERSION.SDK_INT )
-               .put("Release ver", Build.VERSION.RELEASE )
+	try{
+		version.put( "SDK ver", Build.VERSION.SDK_INT )
+		       .put( "Release ver", Build.VERSION.RELEASE )
 		;
-	} catch (JSONException e) {
+	}catch ( JSONException e ){
 		e.printStackTrace();
 		version = errJSONObject;
 	}
-return version;
+	return version;
 }//getVersion
-
-public static String getSystemProperty(String sysProperty){
-// System Property "ro.serialno" returns the serial number as unique number Works for Android 2.3 and above
-	String retVal = null;
-	try {
-		Class<?> c = Class.forName("android.os.SystemProperties");
-		Method get = c.getMethod("get", String.class, String.class );
-		//serialnum = (String)(   get.invoke(c, "ro.serialno", "unknown" )  );
-		retVal =  (String)( get.invoke(c, sysProperty, null ) );
-	}
-	catch (Exception ignored){}
-return retVal;
-}//getSystemProperty
 
 public String getExternalStorageDirectory(){
 	String path = Environment.DIRECTORY_DOWNLOADS; //api 8
-	File file = new File(Environment.DIRECTORY_DOWNLOADS);
+	File file = new File( Environment.DIRECTORY_DOWNLOADS );
 	boolean DirCreated = file.isDirectory() || file.mkdirs();
-	mLog.debug("DirCreated?:\t" + Boolean.toString(DirCreated));
+	mLog.debug( "DirCreated?:\t" + Boolean.toString( DirCreated ) );
 
-return file.getAbsolutePath();
+	return file.getAbsolutePath();
 }//getExternalStorageDirectory
 
 public String getAppDataDir(){ return getApplicationInfo().dataDir; }
 
-static private RequestQueue mRequestQueue = null;
-static private final int maxCacheSizeInBytes = 1024 * 1024 * 2;//= 2Mb
 public RequestQueue getRequestQueue(){
-	if (mRequestQueue == null){
-		Cache cache = new DiskBasedCache(getCacheDir(), maxCacheSizeInBytes);
-		Network network = new BasicNetwork(new HurlStack());
-		mRequestQueue = new RequestQueue(cache, network);
+	if ( mRequestQueue == null ){
+		Cache cache = new DiskBasedCache( getCacheDir(), maxCacheSizeInBytes );
+		Network network = new BasicNetwork( new HurlStack() );
+		mRequestQueue = new RequestQueue( cache, network );
 		mRequestQueue.start();
 	}
-return mRequestQueue;
+	return mRequestQueue;
 }
 
 public void close(){//throws Exception
-	try {
-		if (mRequestQueue != null){
+	try{
+		if ( mRequestQueue != null ){
 			//http://stackoverflow.com/questions/16774667/cancel-all-volley-requests-android
-			mRequestQueue.cancelAll(new RequestQueue.RequestFilter(){
-				@Override public boolean apply(Request<?> request){
-					mLog.debug("request running: " + request.getTag().toString());
+			mRequestQueue.cancelAll( new RequestQueue.RequestFilter(){
+				@Override public boolean apply( Request< ? > request ){
+					mLog.debug( "request running: " + request.getTag().toString() );
 					return true;
 				}
-			});
+			} );
 
 			mRequestQueue.stop();
 		}
 
-		if (mAssetManager != null) mAssetManager.close();
+		if ( mAssetManager != null ) mAssetManager.close();
 
-	}
-	catch(Exception X){ mLog.error("pkUtility close error");}
+	}catch ( Exception X ){ mLog.error( "pkUtility close error" );}
 }//close()
 
 public boolean isDeviceRegisteredToPeaceKeeper(){
@@ -370,7 +363,53 @@ public boolean isDeviceRegisteredToPeaceKeeper(){
 //Shows a toast with the given text.
 public void debugToast( String debug ){
 	mLog.debug( debug );
-	Toast.makeText( this, debug, Toast.LENGTH_SHORT ).show(); }
+	//Toast.makeText( this, debug, Toast.LENGTH_LONG ).show();
+}
+
+
+public enum TestResult{Unknown, OK, DBdown, Restdown, Netdown, GPSdown, MismatchedDeployment;}
+public TestResult Test(){//TODO needs work
+	startRESTService( pkRequest.pkURL.status );
+//	while ( mTestResult == TestResult.Unknown ) ; //wait for TestResult
+	return mTestResult;
+}
+
+private RESTResultReceiver mRESTResultReceiver = new RESTResultReceiver( new Handler() );
+protected void startRESTService( final pkRequest.pkURL aURL ){
+	// Start the service. If the service isn't already running, it is instantiated and started
+	// (creating a process for it if needed); if it is running then it remains running. The
+	// service kills itself automatically once all intents are processed.
+
+	startService(
+			new Intent( this, RESTIntentService.class )
+					.putExtra( RESTIntentService.RECEIVER, mRESTResultReceiver )
+					.putExtra( RESTIntentService.REQUEST, aURL.name() )
+	            );
+}//startRESTService()
+
+
+class RESTResultReceiver extends ResultReceiver{
+	public RESTResultReceiver( Handler handler ){ super( handler ); }
+
+	//Receives data sent from RESTIntentService.
+	@Override protected void onReceiveResult( int resultCode, Bundle resultData ){
+//{"timestamp":"2017-04-24 18:05:09.313071","version":"0.1.1","application":"PeaceKeeperCloud"}
+		String JSONResult = resultData.getString( RESTIntentService.JSONResult );
+		try{
+			JSONObject jsonObject = new JSONObject( JSONResult );
+			mTestResult =  ( jsonObject.get( "application" ) == "PeaceKeeperCloud" ) ? TestResult.OK : TestResult.Restdown ;
+			debugToast( "JSONResult:\t" + JSONResult );
+
+		}catch ( JSONException aE ){ aE.printStackTrace(); }
+		//mLog.debug( "RESTResultReceiver:\t" + snippet );
+		//mMarker.setSnippet( snippet );
+		//mMarker.showInfoWindow();
+	}//onReceiveResult
+}//class RESTResultReceiver
+
+
+}//class pkUtility
+
 
 /*
 public void sendEmail(){
@@ -467,5 +506,3 @@ public boolean registerDevice(boolean FORCE){
 }//registerDevice
 */
 
-
-}//class pkUtility
